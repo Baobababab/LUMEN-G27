@@ -7,6 +7,7 @@ import pandas as pd
 _DATA_DIR = Path(__file__).resolve().parent / "data"
 _PII_COLUMNS = ("first_name", "last_name", "email")
 _ANOMALY_WEEK = "2025-07-28"
+_ANOMALY_FLAG_COLUMN = "anomaly_flag"
 _report: dict[str, Any] | None = None
 
 
@@ -23,6 +24,7 @@ def _anomaly_report(history: pd.DataFrame, seasonality: pd.DataFrame) -> dict[st
     dates = pd.to_datetime(history["week_start_date"], errors="coerce")
     weekly_totals = history.assign(_week=dates).groupby("_week")["units_sold"].sum()
     anomaly_date = pd.Timestamp(_ANOMALY_WEEK)
+    anomaly_rows = dates.eq(anomaly_date)
     anomaly_total = float(weekly_totals.get(anomaly_date, 0))
     weekly_median = float(weekly_totals.median())
 
@@ -33,6 +35,9 @@ def _anomaly_report(history: pd.DataFrame, seasonality: pd.DataFrame) -> dict[st
 
     return {
         "week": _ANOMALY_WEEK,
+        "file": "historical_sales_weekly.csv",
+        "marker_column": _ANOMALY_FLAG_COLUMN,
+        "rows_flagged": int(anomaly_rows.sum()),
         "classification": classification,
         "units_sold": int(anomaly_total),
         "weekly_median_units": int(round(weekly_median)),
@@ -60,10 +65,14 @@ def load_all() -> dict[str, pd.DataFrame]:
 
     frames: dict[str, pd.DataFrame] = {}
     duplicate_rows_removed = 0
+    pii_columns_by_file: dict[str, list[str]] = {}
 
     for path in paths:
         kwargs: dict[str, Any] = {}
-        if path.name == "customer_survey.csv":
+        header = _read_csv(path, nrows=0)
+        excluded_columns = [column for column in _PII_COLUMNS if column in header.columns]
+        if excluded_columns:
+            pii_columns_by_file[path.name] = excluded_columns
             kwargs["usecols"] = lambda column: column not in _PII_COLUMNS
 
         frame = _read_csv(path, **kwargs)
@@ -71,6 +80,8 @@ def load_all() -> dict[str, pd.DataFrame]:
             before = len(frame)
             frame = frame.drop_duplicates(ignore_index=True)
             duplicate_rows_removed = before - len(frame)
+            dates = pd.to_datetime(frame["week_start_date"], errors="coerce")
+            frame[_ANOMALY_FLAG_COLUMN] = dates.eq(pd.Timestamp(_ANOMALY_WEEK))
 
         frames[path.stem] = frame
 
@@ -80,12 +91,32 @@ def load_all() -> dict[str, pd.DataFrame]:
         missing = [name for name, frame in (("historical_sales_weekly", history), ("seasonality_and_weather", seasonality)) if frame is None]
         raise RuntimeError(f"Required CSV file(s) missing: {', '.join(missing)}")
 
+    anomaly = _anomaly_report(history, seasonality)
     _report = {
-        "duplicate_rows_removed": duplicate_rows_removed,
-        "pii_columns_excluded": list(_PII_COLUMNS),
-        "anomaly_weeks_flagged": [_anomaly_report(history, seasonality)],
+        "duplicate_rows_removed": {
+            "count": duplicate_rows_removed,
+            "by_file": {
+                "historical_sales_weekly.csv": {
+                    "rows_removed": duplicate_rows_removed,
+                    "rule": "drop exact duplicate rows across all columns, keeping the first occurrence",
+                }
+            },
+        },
+        "pii_columns_excluded": {
+            "count": sum(len(columns) for columns in pii_columns_by_file.values()),
+            "by_file": pii_columns_by_file,
+        },
+        "anomaly_weeks_flagged": {
+            "count": anomaly["rows_flagged"],
+            "by_file": {"historical_sales_weekly.csv": [anomaly]},
+        },
     }
     return frames
+
+
+def load_all_data() -> dict[str, pd.DataFrame]:
+    """Compatibility name for callers that use the issue's function name."""
+    return load_all()
 
 
 def cleaning_report() -> dict[str, Any]:
@@ -93,7 +124,19 @@ def cleaning_report() -> dict[str, Any]:
     if _report is None:
         load_all()
     return {
-        "duplicate_rows_removed": _report["duplicate_rows_removed"],
-        "pii_columns_excluded": list(_report["pii_columns_excluded"]),
-        "anomaly_weeks_flagged": [dict(item) for item in _report["anomaly_weeks_flagged"]],
+        "duplicate_rows_removed": {
+            "count": _report["duplicate_rows_removed"]["count"],
+            "by_file": {name: dict(details) for name, details in _report["duplicate_rows_removed"]["by_file"].items()},
+        },
+        "pii_columns_excluded": {
+            "count": _report["pii_columns_excluded"]["count"],
+            "by_file": {name: list(columns) for name, columns in _report["pii_columns_excluded"]["by_file"].items()},
+        },
+        "anomaly_weeks_flagged": {
+            "count": _report["anomaly_weeks_flagged"]["count"],
+            "by_file": {
+                name: [dict(item) for item in items]
+                for name, items in _report["anomaly_weeks_flagged"]["by_file"].items()
+            },
+        },
     }
