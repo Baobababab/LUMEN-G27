@@ -13,6 +13,7 @@ Once you've forked it, add your teammates as collaborators (Settings → Collabo
 The full brief is in `LUMEN_Case_Brief.md` (and a formatted version in `LUMEN_Case_Brief.pdf`). The data is in the `data/` folder, documented in `data/README_data.md`.
 
 Before using or publishing any case data, read [`DATA_CONFIDENTIALITY.md`](DATA_CONFIDENTIALITY.md).
+The recommended internal and external data sources are listed in [`DATA_PLAN.md`](DATA_PLAN.md).
 
 One-sentence summary: LUMEN, a functional beverage brand, has to decide **price, positioning, and launch channel(s)** to enter the German market — with no real German sales data (LUMEN isn't there yet), and a real trade-off between the CMO (premium positioning) and the CFO (fast return on investment).
 
