@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -32,10 +33,11 @@ def money(value):
     return f"EUR {value:,.2f}"
 
 
-def metric_card(label, value, detail="", accent=False):
+def metric_card(label, value, detail="", accent=False, status="neutral"):
     accent_class = " accent" if accent else ""
+    status_class = f" {status}" if status in {"pass", "fail"} else ""
     return f"""
-    <div class="metric-card{accent_class}">
+    <div class="metric-card{accent_class}{status_class}">
       <div class="metric-label">{label}</div>
       <div class="metric-value">{value}</div>
       <div class="metric-detail">{detail}</div>
@@ -121,6 +123,14 @@ st.markdown(
     .metric-card.accent {
       border-top-color: var(--purple);
       background: var(--purple-soft);
+    }
+    .metric-card.pass {
+      border-top-color: var(--green);
+      background: #f0faf5;
+    }
+    .metric-card.fail {
+      border-top-color: var(--red);
+      background: #fff3f4;
     }
     .metric-label {
       color: var(--muted);
@@ -231,8 +241,18 @@ payback_months = blended_cac / monthly_profit if monthly_profit else float("inf"
 clv = monthly_profit * CUSTOMER_LIFETIME_MONTHS
 clv_cac_ratio = clv / blended_cac if blended_cac else 0
 
+unit_status = "pass" if unit_contribution > 0 else "fail"
+monthly_profit_status = "pass" if monthly_profit > 0 else "fail"
+payback_status = "pass" if payback_months <= PAYBACK_TARGET_MONTHS else "fail"
+clv_status = "pass" if clv_cac_ratio >= LTV_CAC_TARGET else "fail"
+ratio_status = "pass" if clv_cac_ratio >= LTV_CAC_TARGET else "fail"
+
 scenario_key = (round(float(selected_price), 2), selected_channel, selected_month)
-scenario_label = f"EUR {selected_price:.2f} · {selected_channel} · {month_names[selected_month]}"
+scenario_label = (
+    f"Price EUR {selected_price:.2f} | "
+    f"Channel {selected_channel} | "
+    f"Launch {month_names[selected_month]}"
+)
 scenario_metrics = {
     "Profit per unit": unit_contribution,
     "Monthly profit per customer": monthly_profit,
@@ -276,15 +296,24 @@ else:
 
 kpi_cols = st.columns(5)
 kpi_cards = [
-    metric_card("Profit per unit", money(unit_contribution), f"{selected_channel} contribution", True),
-    metric_card("Monthly profit per customer", money(monthly_profit), f"{survey_frequency:.1f} purchases/month"),
-    metric_card("Break-even on CAC", f"{payback_months:.1f} months", f"CAC: {money(blended_cac)}"),
-    metric_card("CLV vs CAC", money(clv), f"CAC: {money(blended_cac)}"),
-    metric_card("CLV:CAC ratio", f"{clv_cac_ratio:.1f}x", f"Target: {LTV_CAC_TARGET:.1f}x", True),
+    metric_card("Profit per unit", money(unit_contribution), f"{selected_channel} contribution", status=unit_status),
+    metric_card("Monthly profit per customer", money(monthly_profit), f"{survey_frequency:.1f} purchases/month", status=monthly_profit_status),
+    metric_card("Break-even on CAC", f"{payback_months:.1f} months", f"CAC: {money(blended_cac)}", status=payback_status),
+    metric_card("CLV vs CAC", money(clv), f"CAC: {money(blended_cac)}", status=clv_status),
+    metric_card("CLV:CAC ratio", f"{clv_cac_ratio:.1f}x", f"Target: {LTV_CAC_TARGET:.1f}x", status=ratio_status),
 ]
 for column, card in zip(kpi_cols, kpi_cards):
     with column:
         st.markdown(card, unsafe_allow_html=True)
+
+
+st.markdown(
+    f'<div class="verdict {verdict_class}">'
+    f'<div class="verdict-title">{verdict} · {month_names[selected_month]} launch at EUR {selected_price:.2f}</div>'
+    f'<div class="verdict-copy">{tradeoff}</div>'
+    "</div>",
+    unsafe_allow_html=True,
+)
 
 
 if st.session_state.comparison_scenarios:
@@ -302,33 +331,65 @@ if st.session_state.comparison_scenarios:
     )
     if selected_metrics:
         comparison_df = pd.DataFrame(st.session_state.comparison_scenarios).rename(
-            columns={"label": "Scenarios"}
+            columns={"label": "Scenario name"}
         )
-        st.bar_chart(
-            comparison_df,
-            x="Scenarios",
-            y=selected_metrics,
-            x_label="Scenarios",
-            y_label="Value",
-            stack=False,
-            height=420,
-            width="stretch",
+        comparison_df["Scenario"] = [
+            f"Scenario {number}"
+            for number in range(1, len(comparison_df) + 1)
+        ]
+        comparison_long = comparison_df.melt(
+            id_vars=["Scenario", "Scenario name"],
+            value_vars=selected_metrics,
+            var_name="Dynamic output",
+            value_name="Output value",
         )
-        st.caption("Values retain their original units: EUR, months, or ratio.")
+        scenario_count = comparison_long["Scenario"].nunique()
+        maximums = comparison_long.groupby("Dynamic output")["Output value"].transform("max")
+        minimums = comparison_long.groupby("Dynamic output")["Output value"].transform("min")
+        comparison_long["Scenario rank"] = "Other"
+        if scenario_count == 1:
+            comparison_long["Scenario rank"] = "Highest"
+        else:
+            comparison_long.loc[comparison_long["Output value"] == maximums, "Scenario rank"] = "Highest"
+            comparison_long.loc[comparison_long["Output value"] == minimums, "Scenario rank"] = "Lowest"
+        comparison_chart = (
+            alt.Chart(comparison_long)
+            .mark_bar()
+            .encode(
+                x=alt.X(
+                    "Scenario:N",
+                    title="Scenarios",
+                    sort=list(comparison_df["Scenario"]),
+                    axis=alt.Axis(labelAngle=0, labelLimit=320, labelOverlap=False),
+                ),
+                xOffset=alt.XOffset("Dynamic output:N", title="Dynamic output"),
+                y=alt.Y("Output value:Q", title=" / ".join(selected_metrics)),
+                color=alt.Color(
+                    "Scenario rank:N",
+                    title="Scenario rank",
+                    scale=alt.Scale(
+                        domain=["Highest", "Other", "Lowest"],
+                        range=["#19724b", "#d97706", "#a13745"],
+                    ),
+                ),
+                tooltip=[
+                    alt.Tooltip("Scenario:N", title="Scenario"),
+                    alt.Tooltip("Scenario name:N", title="Price / channel / launch"),
+                    alt.Tooltip("Dynamic output:N", title="Output"),
+                    alt.Tooltip("Scenario rank:N", title="Rank"),
+                    alt.Tooltip("Output value:Q", title="Value", format=",.2f"),
+                ],
+            )
+            .properties(height=420)
+        )
+        st.altair_chart(comparison_chart, width="stretch")
+        st.caption("Each scenario name includes its price, channel, and launch month. Values retain their original units.")
     else:
         st.info("Select at least one output to display the histogram.")
 
     if st.button("Clear comparison", type="secondary"):
         st.session_state.comparison_scenarios = []
         st.rerun()
-
-st.markdown(
-    f'<div class="verdict {verdict_class}">'
-    f'<div class="verdict-title">{verdict} · {month_names[selected_month]} launch at EUR {selected_price:.2f}</div>'
-    f'<div class="verdict-copy">{tradeoff}</div>'
-    "</div>",
-    unsafe_allow_html=True,
-)
 
 
 detail_cols = st.columns([1.15, 1])
