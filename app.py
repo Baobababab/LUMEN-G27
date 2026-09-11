@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -247,7 +248,11 @@ clv_status = "pass" if clv_cac_ratio >= LTV_CAC_TARGET else "fail"
 ratio_status = "pass" if clv_cac_ratio >= LTV_CAC_TARGET else "fail"
 
 scenario_key = (round(float(selected_price), 2), selected_channel, selected_month)
-scenario_label = f"EUR {selected_price:.2f} · {selected_channel} · {month_names[selected_month]}"
+scenario_label = (
+    f"Price EUR {selected_price:.2f} | "
+    f"Channel {selected_channel} | "
+    f"Launch {month_names[selected_month]}"
+)
 scenario_metrics = {
     "Profit per unit": unit_contribution,
     "Monthly profit per customer": monthly_profit,
@@ -319,17 +324,35 @@ if st.session_state.comparison_scenarios:
         comparison_df = pd.DataFrame(st.session_state.comparison_scenarios).rename(
             columns={"label": "Scenarios"}
         )
-        st.bar_chart(
-            comparison_df,
-            x="Scenarios",
-            y=selected_metrics,
-            x_label="Scenarios",
-            y_label="Value",
-            stack=False,
-            height=420,
-            width="stretch",
+        comparison_long = comparison_df.melt(
+            id_vars="Scenarios",
+            value_vars=selected_metrics,
+            var_name="Dynamic output",
+            value_name="Output value",
         )
-        st.caption("Values retain their original units: EUR, months, or ratio.")
+        comparison_chart = (
+            alt.Chart(comparison_long)
+            .mark_bar()
+            .encode(
+                x=alt.X(
+                    "Scenarios:N",
+                    title="Scenarios",
+                    sort=list(comparison_df["Scenarios"]),
+                    axis=alt.Axis(labelAngle=-25, labelLimit=240),
+                ),
+                xOffset=alt.XOffset("Dynamic output:N", title="Dynamic output"),
+                y=alt.Y("Output value:Q", title=" / ".join(selected_metrics)),
+                color=alt.Color("Dynamic output:N", title="Dynamic output"),
+                tooltip=[
+                    alt.Tooltip("Scenarios:N", title="Scenario"),
+                    alt.Tooltip("Dynamic output:N", title="Output"),
+                    alt.Tooltip("Output value:Q", title="Value", format=",.2f"),
+                ],
+            )
+            .properties(height=420)
+        )
+        st.altair_chart(comparison_chart, width="stretch")
+        st.caption("Each scenario name includes its price, channel, and launch month. Values retain their original units.")
     else:
         st.info("Select at least one output to display the histogram.")
 
