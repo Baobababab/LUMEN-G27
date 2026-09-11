@@ -1,8 +1,8 @@
-from data_loader import cleaning_report, load_all_data
+from data_loader import cleaning_report, load_all
 
 
 def test_data_is_loaded_and_cleaned():
-    frames = load_all_data()
+    frames = load_all()
 
     assert len(frames) == 12
     assert len(frames["historical_sales_weekly"]) == 702

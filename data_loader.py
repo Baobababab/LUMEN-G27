@@ -114,11 +114,6 @@ def load_all() -> dict[str, pd.DataFrame]:
     return frames
 
 
-def load_all_data() -> dict[str, pd.DataFrame]:
-    """Compatibility name for callers that use the issue's function name."""
-    return load_all()
-
-
 def cleaning_report() -> dict[str, Any]:
     """Return what was removed or excluded and why the known anomaly was flagged."""
     if _report is None:
