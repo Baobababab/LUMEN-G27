@@ -4,9 +4,11 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+from economics import customer_lifetime_months
+
 
 DATA_DIR = Path(__file__).parent / "data"
-CUSTOMER_LIFETIME_MONTHS = 12
+CUSTOMER_LIFETIME_MONTHS = customer_lifetime_months()
 LTV_CAC_TARGET = 3.0
 PAYBACK_TARGET_MONTHS = 12.0
 ACCEPTANCE_FLOOR = 0.40
@@ -413,7 +415,7 @@ with detail_cols[0]:
                 f"{survey_frequency:.1f} purchases/month",
                 f"{seasonality_factor:.2f}x",
                 money(blended_cac),
-                f"{CUSTOMER_LIFETIME_MONTHS} months",
+                f"{CUSTOMER_LIFETIME_MONTHS:.2f} months",
             ],
         }
     )
@@ -430,7 +432,7 @@ with detail_cols[1]:
     )
     st.dataframe(threshold_rows, hide_index=True, width="stretch")
     st.markdown(
-        '<div class="small-note">CLV is contribution-based: seasonally adjusted monthly customer profit multiplied by the visible 12-month lifetime assumption. CAC is the blended marketing CAC for the selected calendar month.</div>',
+        f'<div class="small-note">CLV is contribution-based: seasonally adjusted monthly customer profit multiplied by the derived {CUSTOMER_LIFETIME_MONTHS:.2f}-month lifetime assumption. CAC is the blended marketing CAC for the selected calendar month.</div>',
         unsafe_allow_html=True,
     )
 
