@@ -31,7 +31,7 @@ Agreed before building. Change these only by team decision, and update this sect
 | Decision | Choice | Why |
 |---|---|---|
 | Interface | **Streamlit**, deployed on Streamlit Community Cloud | Python only, connects straight to this repo, everyone can contribute |
-| Price acceptance | **Recomputed, segment-weighted per channel** | The supplied acceptance figures are identical across channels; without reweighting, channel choice cannot affect demand |
+| Price acceptability | **Recomputed, segment-weighted index per channel** | The supplied test figures are identical across channels; without reweighting, channel choice cannot affect price acceptability |
 | Payback horizon | **User-adjustable slider, default 12 months** | Makes the CMO/CFO trade-off visible instead of hiding it in a constant |
 | Customer LTV | **Re-derived from the selected price** | Home-market LTV is priced in NL/DK/SE; copying it would make the ratio blind to price |
 | Market volume | **Not modelled — per-customer economics only** | Payback and LTV:CAC are per-customer metrics. Market share would be our invented assumption |
@@ -48,7 +48,7 @@ starts real work. This is what lets five people work at once without touching ea
 
 **M1 — Scenario engine (numbers only, no styling).**
 Inputs: retail price, sales channel, launch month. Outputs: unit contribution, segment-weighted
-acceptance, monthly contribution per customer, months to payback, LTV:CAC. Correct arithmetic
+price-acceptability index, monthly contribution per customer, months to payback, LTV:CAC. Correct arithmetic
 matters more than presentation here.
 
 **M2 — Verdict layer.**
@@ -83,10 +83,29 @@ def cleaning_report() -> dict:
 
 # acceptance.py — owner B
 def acceptance_rate(price: float, channel: str) -> float:
-    """Segment-weighted probability of purchase at this price in this channel, 0.0-1.0.
-    Weight each segment by its share of respondents preferring that channel,
-    and by its own price sensitivity. Falls back to the supplied flat rate if a
-    segment is missing, and says so."""
+    """Segment-weighted PRICE-ACCEPTABILITY INDEX at this price in this channel, 0.0-1.0.
+    NOT a calibrated purchase probability — this is the share of the channel's customer
+    base for whom price falls inside their Van Westendorp acceptable band
+    (cheap_eur <= price <= expensive_eur), weighted by each segment's share of that
+    channel's respondents. Never call this a "probability of purchase" in code, UI or
+    docstrings.
+
+    Not monotone below EUR 2.10 in any channel (max(cheap_eur) across the price-sensitivity
+    survey is EUR 2.10) — a lower price can reduce the index there, because some segments
+    perceive it as suspiciously cheap. Monotone non-increasing at or above EUR 2.10 in
+    every channel. This is a verified property of the data, not a bug.
+
+    Raises ValueError for a bad argument: non-finite, boolean, zero or negative price, or
+    a channel not in SALES_CHANNELS.
+
+    Raises AcceptanceDataError (not a silent fallback) when the data cannot support a
+    result: a required table or column is missing, the channel's respondent subset is
+    empty, a segment in that subset has no rows in the price-sensitivity data, or price
+    falls outside OBSERVED_PRICE_SUPPORT. app.py must catch AcceptanceDataError and show
+    the caller a caveat instead of a number, without running the verdict on it."""
+
+class AcceptanceDataError(Exception):
+    """Raised by acceptance_rate() when the data cannot support a result — see docstring."""
 
 
 # economics.py — owner C
@@ -118,7 +137,42 @@ TARGET_LTV_CAC = 3.0
 DEFAULT_PAYBACK_HORIZON_MONTHS = 12.0
 ACCEPTANCE_FLOOR = 0.35   # provisional, team to confirm
 SALES_CHANNELS = ("DTC Online", "Retail/Grocery", "Gym & Office")
+PUBLISHED_TEST_PRICES = (1.79, 2.19, 2.59)   # prices price_test_results.csv actually tested
+OBSERVED_PRICE_SUPPORT = (0.62, 3.09)         # min(cheap_eur), max(expensive_eur) in the data
+ACCEPTANCE_MONOTONE_FLOOR_EUR = 2.10          # monotonicity only holds at/above this price
 ```
+
+### 5a. Amendment — acceptance.py (Task B plan review, 2026-09-11)
+
+| Price | DTC Online | Retail/Grocery | Gym & Office | Unweighted diagnostic |
+|---:|---:|---:|---:|---:|
+| EUR 1.79 | 0.530427 | 0.621350 | 0.682448 | 0.616667 |
+| EUR 2.19 | 0.654800 | 0.437131 | 0.541966 | 0.516667 |
+| EUR 2.59 | 0.436370 | 0.203726 | 0.237755 | 0.266667 |
+
+1. **Metric semantics changed.** acceptance_rate() is a price-acceptability index, not a
+   purchase probability. See the updated docstring above.
+2. **Monotonicity requirement narrowed.** The original "acceptance falls as price rises in
+   every channel" is replaced by: monotone non-increasing only at or above
+   ACCEPTANCE_MONOTONE_FLOOR_EUR (2.10). Below that, behaviour is non-monotone by a
+   verified property of the underlying survey data, not an implementation defect.
+3. **Cross-module aggregation constraint on economics.py.** Acceptability and purchase
+   frequency covary by segment. economics.py must NOT multiply a channel-level
+   acceptance_rate() result by a separately-computed channel-level mean purchase frequency
+   — that computes a product of averages where the correct quantity is an average of
+   products, understating expected units by up to ~21% in the worst observed case
+   (Retail/Grocery at EUR 2.59). economics.py must either (a) expose and use a
+   segment-resolved helper computing sum(weight_segment * acceptance_segment *
+   frequency_segment), or (b) if it never multiplies the two aggregated values, document
+   why not. Task C's owner must read this before finishing economics.py.
+4. **Fallback replaced by a raised error.** The original flat-rate fallback for a missing
+   segment is removed. acceptance_rate() raises AcceptanceDataError instead — see the
+   docstring above for exactly when.
+
+> **Temporary development warning:** Task A is not merged yet. Until it is available,
+> Task B may use simulated DataFrames only in tests. Simulated data does not prove final
+> correctness. Task B is not complete until `acceptance_rate()` passes an integration check
+> using the real DataFrames returned by `data_loader.load_all()`.
 
 ## 6. Formulas and definitions
 
@@ -150,13 +204,13 @@ Sales channels are `DTC Online`, `Retail/Grocery`, `Gym & Office`. Marketing cha
 the marketing channels, unit contribution lives on the sales channels. Any mapping between them is
 our assumption and must be declared as one.
 
-**Acceptance is uniform across sales channels, and that is the opening.**
-`price_test_results.csv` reports the same acceptance at each price regardless of channel
+**Published test acceptance is uniform across sales channels, and that is the opening.**
+`price_test_results.csv` reports the same test acceptance at each price regardless of channel
 (61.7% at €1.79, 51.7% at €2.19, 26.7% at €2.59). But segments differ in price sensitivity and in
 preferred channel: of ~420 survey respondents, 195 prefer Retail/Grocery, 119 DTC Online, 106 Gym
 & Office, and Students & Budget-Conscious is the largest segment at 135. Recomputing
-segment-weighted acceptance per channel is the analytical contribution the brief deliberately left
-unblended, and it is why `acceptance.py` exists as its own module.
+segment-weighted price acceptability per channel is the analytical contribution the brief deliberately
+left unblended, and it is why `acceptance.py` exists as its own module.
 
 **Planted data-quality defects.**
 `historical_sales_weekly.csv` contains **4 exact duplicate rows** (weeks beginning 2025-07-14,
@@ -206,4 +260,6 @@ If an API key is ever needed, it goes in an environment variable, never in a com
 - The data-quality panel states what was removed and what was flagged.
 - The README checklist is answered, in writing, while building.
 - The "Our Approach" paragraph in `README.md` is written in business language.
+- acceptance.py raises AcceptanceDataError (not a silent fallback or a bare float) for any
+  input the data cannot support, and app.py catches it and shows a caveat.
 - Every team member's prompt log is committed and merged. Work that is not merged does not exist.
