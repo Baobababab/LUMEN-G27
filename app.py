@@ -77,30 +77,89 @@ def _show_metric(label: str, value: Any, explanation: str, suffix: str = "") -> 
     st.caption(explanation)
 
 
-st.set_page_config(page_title="LUMEN Germany Market Entry", page_icon="🥤")
-st.title("LUMEN Germany Market Entry")
+st.set_page_config(page_title="LUMEN — Germany Launch Decision Tool", page_icon="🥤")
+st.title("LUMEN — Germany Launch Decision Tool")
 st.write(
-    "Set a price, channel, and launch month to see the per-customer economics "
-    "of the scenario."
+    "Explore how price, channel and launch timing affect the economics of the "
+    "German market entry."
+)
+st.markdown(
+    """
+    <style>
+    :root {
+        --lumen-navy: #123047;
+        --lumen-teal: #2f6f73;
+        --lumen-ink: #243746;
+        --lumen-muted: #64748b;
+        --lumen-line: #dce5e8;
+        --lumen-surface: #ffffff;
+        --lumen-background: #f7f8f6;
+    }
+    .stApp { background: var(--lumen-background); color: var(--lumen-ink); }
+    .block-container { max-width: 1100px; padding: 2.75rem 2.5rem 4rem; }
+    [data-testid="stSidebar"] {
+        background: #eef3f2;
+        border-right: 1px solid var(--lumen-line);
+    }
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0.8rem; }
+    h1 { color: var(--lumen-navy); letter-spacing: -0.03em; margin-bottom: 0.35rem; }
+    h2 { color: var(--lumen-navy); letter-spacing: -0.02em; margin-top: 2rem; }
+    h3 { color: var(--lumen-teal); margin-top: 1.35rem; }
+    p, [data-testid="stCaptionContainer"] { color: var(--lumen-muted); }
+    [data-testid="stMetric"] {
+        background: var(--lumen-surface);
+        border: 1px solid var(--lumen-line);
+        border-radius: 12px;
+        box-shadow: 0 4px 14px rgba(18, 48, 71, 0.05);
+        min-height: 7.5rem;
+        padding: 1.1rem 1.2rem;
+    }
+    [data-testid="stMetricLabel"] { color: var(--lumen-muted); font-size: 0.82rem; }
+    [data-testid="stMetricValue"] { color: var(--lumen-navy); font-size: 1.65rem; }
+    div[data-baseweb="input"] > div,
+    div[data-baseweb="select"] > div {
+        background: var(--lumen-surface);
+        border-color: var(--lumen-line);
+        border-radius: 8px;
+    }
+    div[data-baseweb="input"] > div:focus-within,
+    div[data-baseweb="select"] > div:focus-within {
+        border-color: var(--lumen-teal);
+        box-shadow: 0 0 0 1px var(--lumen-teal);
+    }
+    [data-testid="stSlider"] [role="slider"] { background: var(--lumen-teal); }
+    [data-testid="stExpander"] {
+        background: var(--lumen-surface);
+        border: 1px solid var(--lumen-line);
+        border-radius: 10px;
+    }
+    [data-testid="stAlert"] { border-radius: 10px; }
+    [data-testid="stMetric"] {
+        margin-bottom: 0.5rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 
-st.subheader("Scenario inputs")
-price_text = st.text_input("Retail price (€)", placeholder="For example: 2.19")
-channel = st.selectbox("Sales channel", options=SALES_CHANNELS)
-launch_month = st.selectbox(
-    "Launch month",
-    options=LAUNCH_MONTHS,
-    format_func=lambda month: calendar.month_name[month],
-)
-payback_horizon = st.slider(
-    "Payback horizon (months)",
-    min_value=PAYBACK_HORIZON_UI_RANGE[0],
-    max_value=PAYBACK_HORIZON_UI_RANGE[1],
-    value=int(DEFAULT_PAYBACK_HORIZON_MONTHS),
-    step=1,
-    help="This is captured for the verdict layer; this milestone does not calculate a verdict.",
-)
+with st.sidebar:
+    st.header("1. Choose your scenario")
+    price_text = st.text_input("Retail price (€)", placeholder="For example: 2.19")
+    channel = st.selectbox("Sales channel", options=SALES_CHANNELS)
+    launch_month = st.selectbox(
+        "Launch month",
+        options=LAUNCH_MONTHS,
+        format_func=lambda month: calendar.month_name[month],
+    )
+    payback_horizon = st.slider(
+        "Payback horizon (months)",
+        min_value=PAYBACK_HORIZON_UI_RANGE[0],
+        max_value=PAYBACK_HORIZON_UI_RANGE[1],
+        value=int(DEFAULT_PAYBACK_HORIZON_MONTHS),
+        step=1,
+        help="This is captured for the verdict layer; this milestone does not calculate a verdict.",
+    )
 
 
 price, price_error = _parse_price(price_text)
@@ -112,7 +171,23 @@ if input_error:
     st.warning(input_error)
 
 
-st.subheader("Decision verdict")
+st.subheader("Scenario summary")
+summary_columns = st.columns(4)
+with summary_columns[0]:
+    st.caption("Retail price")
+    st.write(_format_metric(price, " €"))
+with summary_columns[1]:
+    st.caption("Sales channel")
+    st.write(channel)
+with summary_columns[2]:
+    st.caption("Launch month")
+    st.write(calendar.month_name[launch_month])
+with summary_columns[3]:
+    st.caption("Payback horizon")
+    st.write(f"{payback_horizon} months")
+
+
+st.header("2. Review the verdict")
 if price is None or input_error is not None:
     st.info("Verdict unavailable until all scenario inputs are valid.")
 else:
@@ -128,7 +203,24 @@ else:
     elif verdict_result is None:
         st.info("Verdict unavailable for this scenario.")
     else:
-        st.metric("Verdict", verdict_result.get("verdict", "Unavailable"))
+        verdict_label = verdict_result.get("verdict", "Unavailable")
+        status_styles = {
+            "GO": ("#1f7a3f", "#e8f5ed"),
+            "CONDITIONAL": ("#a15c00", "#fff4df"),
+            "NO-GO": ("#b42318", "#fdeceb"),
+        }
+        status_color, status_background = status_styles.get(
+            verdict_label,
+            ("#4b5563", "#f3f4f6"),
+        )
+        st.markdown(
+            f'<div style="background:{status_background}; border-left:8px solid '
+            f'{status_color}; border-radius:6px; padding:1rem 1.25rem; '
+            f'margin-bottom:1rem;"><div style="color:{status_color}; '
+            f'font-size:2rem; font-weight:700;">{verdict_label}</div>'
+            '<div style="color:#4b5563; font-size:0.9rem;">Decision verdict</div></div>',
+            unsafe_allow_html=True,
+        )
         st.write("Decided by:", verdict_result.get("decided_by", "Unavailable"))
         st.write("Reasons:")
         reasons = verdict_result.get("reasons")
@@ -146,7 +238,7 @@ else:
             st.write("Unavailable")
 
 
-st.subheader("Scenario economics")
+st.header("3. Explore the economics")
 metric_definitions = (
     (
         "Unit contribution",
@@ -198,16 +290,28 @@ if price is not None and input_error is None:
         if error and error not in metric_errors:
             metric_errors.append(error)
 
-columns = st.columns(3)
-for index, (label, _function, explanation, suffix) in enumerate(metric_definitions):
-    with columns[index % len(columns)]:
-        _show_metric(label, metric_values.get(label), explanation, suffix)
+metric_groups = (
+    ("Demand", ("Acceptance rate",)),
+    ("Contribution", ("Unit contribution", "Monthly contribution per customer")),
+    (
+        "Investment",
+        ("Months to payback", "Lifetime value", "LTV:CAC ratio"),
+    ),
+)
+for group_name, group_labels in metric_groups:
+    st.subheader(group_name)
+    columns = st.columns(len(group_labels))
+    for index, label in enumerate(group_labels):
+        definition = next(item for item in metric_definitions if item[0] == label)
+        _label, _function, explanation, suffix = definition
+        with columns[index]:
+            _show_metric(label, metric_values.get(label), explanation, suffix)
 
 for error in metric_errors:
     st.info(error)
 
 
-st.subheader("Stated assumptions")
+st.subheader("Model assumptions")
 lifetime, lifetime_error = _safe_call(customer_lifetime_months)
 assumption_columns = st.columns(2)
 with assumption_columns[0]:
@@ -224,7 +328,7 @@ st.caption(
 )
 
 
-with st.expander("Data quality and cleaning report"):
+with st.expander("Data quality"):
     report, report_error = _safe_call(cleaning_report)
     if report_error:
         st.info(report_error)
