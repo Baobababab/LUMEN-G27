@@ -330,6 +330,15 @@ if st.session_state.comparison_scenarios:
             var_name="Dynamic output",
             value_name="Output value",
         )
+        scenario_count = comparison_long["Scenarios"].nunique()
+        maximums = comparison_long.groupby("Dynamic output")["Output value"].transform("max")
+        minimums = comparison_long.groupby("Dynamic output")["Output value"].transform("min")
+        comparison_long["Scenario rank"] = "Other"
+        if scenario_count == 1:
+            comparison_long["Scenario rank"] = "Highest"
+        else:
+            comparison_long.loc[comparison_long["Output value"] == maximums, "Scenario rank"] = "Highest"
+            comparison_long.loc[comparison_long["Output value"] == minimums, "Scenario rank"] = "Lowest"
         comparison_chart = (
             alt.Chart(comparison_long)
             .mark_bar()
@@ -338,14 +347,22 @@ if st.session_state.comparison_scenarios:
                     "Scenarios:N",
                     title="Scenarios",
                     sort=list(comparison_df["Scenarios"]),
-                    axis=alt.Axis(labelAngle=-25, labelLimit=240),
+                    axis=alt.Axis(labelAngle=0, labelLimit=320, labelOverlap=False),
                 ),
                 xOffset=alt.XOffset("Dynamic output:N", title="Dynamic output"),
                 y=alt.Y("Output value:Q", title=" / ".join(selected_metrics)),
-                color=alt.Color("Dynamic output:N", title="Dynamic output"),
+                color=alt.Color(
+                    "Scenario rank:N",
+                    title="Scenario rank",
+                    scale=alt.Scale(
+                        domain=["Highest", "Other", "Lowest"],
+                        range=["#19724b", "#d97706", "#a13745"],
+                    ),
+                ),
                 tooltip=[
                     alt.Tooltip("Scenarios:N", title="Scenario"),
                     alt.Tooltip("Dynamic output:N", title="Output"),
+                    alt.Tooltip("Scenario rank:N", title="Rank"),
                     alt.Tooltip("Output value:Q", title="Value", format=",.2f"),
                 ],
             )
