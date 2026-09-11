@@ -5,6 +5,8 @@ import math
 from collections.abc import Callable
 from typing import Any
 
+import altair as alt
+import pandas as pd
 import streamlit as st
 
 from acceptance import acceptance_rate
@@ -15,7 +17,7 @@ from constants import (
     SALES_CHANNELS,
     TARGET_LTV_CAC,
 )
-from data_loader import cleaning_report
+from data_loader import cleaning_report, load_all
 from economics import (
     customer_lifetime_months,
     ltv,
@@ -325,6 +327,63 @@ if lifetime_error:
 st.caption(
     "Display-only thresholds from the model contract: "
     f"target LTV:CAC {TARGET_LTV_CAC}; acceptance floor {ACCEPTANCE_FLOOR:.2f}."
+)
+
+
+st.subheader("Scenario comparison")
+st.caption("Compare the available price and channel scenarios using the shared model functions.")
+comparison_data, comparison_error = _safe_call(load_all)
+if comparison_error:
+    st.info(f"Scenario comparison not available yet: {comparison_error}")
+elif comparison_data is not None:
+    price_data = comparison_data.get("price_test_results")
+    if isinstance(price_data, pd.DataFrame) and "price_eur" in price_data:
+        comparison_rows: list[dict[str, Any]] = []
+        comparison_prices = sorted(price_data["price_eur"].dropna().unique())
+        for comparison_price in comparison_prices:
+            for comparison_channel in SALES_CHANNELS:
+                metric, metric_error = _safe_call(
+                    unit_contribution,
+                    float(comparison_price),
+                    comparison_channel,
+                )
+                if metric_error is None and metric is not None:
+                    comparison_rows.append(
+                        {
+                            "Scenario": f"€{float(comparison_price):.2f} · {comparison_channel}",
+                            "Unit contribution (€)": metric,
+                        }
+                    )
+        if comparison_rows:
+            chart_data = pd.DataFrame(comparison_rows)
+            chart = (
+                alt.Chart(chart_data)
+                .mark_bar()
+                .encode(
+                    x=alt.X("Unit contribution (€):Q", title="Unit contribution (€)"),
+                    y=alt.Y("Scenario:N", sort="-x", title=None),
+                    tooltip=["Scenario:N", "Unit contribution (€):Q"],
+                )
+            )
+            st.altair_chart(chart, use_container_width=True)
+        else:
+            st.info("Scenario comparison will appear when the economics module is implemented.")
+    else:
+        st.info("Scenario comparison will appear when price-test data is available.")
+
+
+st.subheader("Thresholds")
+st.table(
+    pd.DataFrame(
+        {
+            "Metric": ["Acceptance rate", "Months to payback", "LTV:CAC ratio"],
+            "Working threshold": [
+                f">= {ACCEPTANCE_FLOOR:.0%}",
+                f"<= {payback_horizon} months",
+                f">= {TARGET_LTV_CAC:.1f}x",
+            ],
+        }
+    )
 )
 
 
