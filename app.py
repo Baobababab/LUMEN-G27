@@ -32,10 +32,11 @@ def money(value):
     return f"EUR {value:,.2f}"
 
 
-def metric_card(label, value, detail="", accent=False):
+def metric_card(label, value, detail="", accent=False, status="neutral"):
     accent_class = " accent" if accent else ""
+    status_class = f" {status}" if status in {"pass", "fail"} else ""
     return f"""
-    <div class="metric-card{accent_class}">
+    <div class="metric-card{accent_class}{status_class}">
       <div class="metric-label">{label}</div>
       <div class="metric-value">{value}</div>
       <div class="metric-detail">{detail}</div>
@@ -121,6 +122,14 @@ st.markdown(
     .metric-card.accent {
       border-top-color: var(--purple);
       background: var(--purple-soft);
+    }
+    .metric-card.pass {
+      border-top-color: var(--green);
+      background: #f0faf5;
+    }
+    .metric-card.fail {
+      border-top-color: var(--red);
+      background: #fff3f4;
     }
     .metric-label {
       color: var(--muted);
@@ -231,6 +240,12 @@ payback_months = blended_cac / monthly_profit if monthly_profit else float("inf"
 clv = monthly_profit * CUSTOMER_LIFETIME_MONTHS
 clv_cac_ratio = clv / blended_cac if blended_cac else 0
 
+unit_status = "pass" if unit_contribution > 0 else "fail"
+monthly_profit_status = "pass" if monthly_profit > 0 else "fail"
+payback_status = "pass" if payback_months <= PAYBACK_TARGET_MONTHS else "fail"
+clv_status = "pass" if clv_cac_ratio >= LTV_CAC_TARGET else "fail"
+ratio_status = "pass" if clv_cac_ratio >= LTV_CAC_TARGET else "fail"
+
 scenario_key = (round(float(selected_price), 2), selected_channel, selected_month)
 scenario_label = f"EUR {selected_price:.2f} · {selected_channel} · {month_names[selected_month]}"
 scenario_metrics = {
@@ -276,11 +291,11 @@ else:
 
 kpi_cols = st.columns(5)
 kpi_cards = [
-    metric_card("Profit per unit", money(unit_contribution), f"{selected_channel} contribution", True),
-    metric_card("Monthly profit per customer", money(monthly_profit), f"{survey_frequency:.1f} purchases/month"),
-    metric_card("Break-even on CAC", f"{payback_months:.1f} months", f"CAC: {money(blended_cac)}"),
-    metric_card("CLV vs CAC", money(clv), f"CAC: {money(blended_cac)}"),
-    metric_card("CLV:CAC ratio", f"{clv_cac_ratio:.1f}x", f"Target: {LTV_CAC_TARGET:.1f}x", True),
+    metric_card("Profit per unit", money(unit_contribution), f"{selected_channel} contribution", status=unit_status),
+    metric_card("Monthly profit per customer", money(monthly_profit), f"{survey_frequency:.1f} purchases/month", status=monthly_profit_status),
+    metric_card("Break-even on CAC", f"{payback_months:.1f} months", f"CAC: {money(blended_cac)}", status=payback_status),
+    metric_card("CLV vs CAC", money(clv), f"CAC: {money(blended_cac)}", status=clv_status),
+    metric_card("CLV:CAC ratio", f"{clv_cac_ratio:.1f}x", f"Target: {LTV_CAC_TARGET:.1f}x", status=ratio_status),
 ]
 for column, card in zip(kpi_cols, kpi_cards):
     with column:
