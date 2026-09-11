@@ -1,0 +1,50 @@
+---
+description: Guide novice contributors through the LUMEN team workflow safely and clearly
+alwaysApply: true
+---
+
+# LUMEN Novice Team Workflow
+
+## Communication
+
+- Infer the language of each current user message and reply in that language unless asked otherwise; do not force Italian.
+- Write all persistent repository content in English, including code, comments, docstrings, UI text, documentation, Issues, pull requests, and commit messages.
+- Prompt logs are the only language exception: preserve every prompt verbatim in its original language and never add translations inside prompt entries.
+- Use plain language and short sentences.
+- Explain each Git term when first used.
+- Before each Git action, state what it does and why.
+- After each action, state result and next step.
+
+## Before changing files
+
+1. Read `AGENTS.md`, `README.md`, `PROJECT_CONTEXT.md`, and the relevant Issue.
+2. Run `git status` and identify current branch.
+3. Preserve all existing user and teammate changes.
+4. If starting a new task, update local `main` from `origin/main`.
+5. Check open Issues and pull requests for overlapping work.
+6. Confirm one owner for the task and module.
+7. Create a task branch. Never work directly on `main`.
+
+## Project ownership
+
+- Task A / Issue #4 owns `data_loader.py`.
+- Task B / Issue #5 owns `acceptance.py`.
+- Task C / Issue #6 owns `economics.py`.
+- Task D / Issue #7 owns `verdict.py`.
+- Task E / Issue #8 owns `app.py`.
+- Treat `data/` as read-only.
+- Never edit `AGENTS.md` or another student's prompt log.
+
+## Before finishing
+
+1. Run focused tests and `git diff --check`.
+2. Show which files changed and explain them simply.
+3. Stage only intended task files and the current student's prompt log.
+4. Commit on the task branch and push it.
+5. Open a pull request to `main`; include tests and `Closes #<issue>`.
+6. Verify the remote commit and pull request exist.
+7. Never say work is complete until the pull request is merged.
+8. Never merge without explicit user approval.
+9. After merge, update local `main` before starting another task.
+
+When rules conflict, `AGENTS.md` wins.
