@@ -307,6 +307,15 @@ for column, card in zip(kpi_cols, kpi_cards):
         st.markdown(card, unsafe_allow_html=True)
 
 
+st.markdown(
+    f'<div class="verdict {verdict_class}">'
+    f'<div class="verdict-title">{verdict} · {month_names[selected_month]} launch at EUR {selected_price:.2f}</div>'
+    f'<div class="verdict-copy">{tradeoff}</div>'
+    "</div>",
+    unsafe_allow_html=True,
+)
+
+
 if st.session_state.comparison_scenarios:
     st.divider()
     st.subheader("Scenario comparison")
@@ -322,15 +331,19 @@ if st.session_state.comparison_scenarios:
     )
     if selected_metrics:
         comparison_df = pd.DataFrame(st.session_state.comparison_scenarios).rename(
-            columns={"label": "Scenarios"}
+            columns={"label": "Scenario name"}
         )
+        comparison_df["Scenario"] = [
+            f"Scenario {number}"
+            for number in range(1, len(comparison_df) + 1)
+        ]
         comparison_long = comparison_df.melt(
-            id_vars="Scenarios",
+            id_vars=["Scenario", "Scenario name"],
             value_vars=selected_metrics,
             var_name="Dynamic output",
             value_name="Output value",
         )
-        scenario_count = comparison_long["Scenarios"].nunique()
+        scenario_count = comparison_long["Scenario"].nunique()
         maximums = comparison_long.groupby("Dynamic output")["Output value"].transform("max")
         minimums = comparison_long.groupby("Dynamic output")["Output value"].transform("min")
         comparison_long["Scenario rank"] = "Other"
@@ -344,9 +357,9 @@ if st.session_state.comparison_scenarios:
             .mark_bar()
             .encode(
                 x=alt.X(
-                    "Scenarios:N",
+                    "Scenario:N",
                     title="Scenarios",
-                    sort=list(comparison_df["Scenarios"]),
+                    sort=list(comparison_df["Scenario"]),
                     axis=alt.Axis(labelAngle=0, labelLimit=320, labelOverlap=False),
                 ),
                 xOffset=alt.XOffset("Dynamic output:N", title="Dynamic output"),
@@ -360,7 +373,8 @@ if st.session_state.comparison_scenarios:
                     ),
                 ),
                 tooltip=[
-                    alt.Tooltip("Scenarios:N", title="Scenario"),
+                    alt.Tooltip("Scenario:N", title="Scenario"),
+                    alt.Tooltip("Scenario name:N", title="Price / channel / launch"),
                     alt.Tooltip("Dynamic output:N", title="Output"),
                     alt.Tooltip("Scenario rank:N", title="Rank"),
                     alt.Tooltip("Output value:Q", title="Value", format=",.2f"),
@@ -376,14 +390,6 @@ if st.session_state.comparison_scenarios:
     if st.button("Clear comparison", type="secondary"):
         st.session_state.comparison_scenarios = []
         st.rerun()
-
-st.markdown(
-    f'<div class="verdict {verdict_class}">'
-    f'<div class="verdict-title">{verdict} · {month_names[selected_month]} launch at EUR {selected_price:.2f}</div>'
-    f'<div class="verdict-copy">{tradeoff}</div>'
-    "</div>",
-    unsafe_allow_html=True,
-)
 
 
 detail_cols = st.columns([1.15, 1])
