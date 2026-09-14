@@ -1,4 +1,4 @@
-from math import isfinite
+from math import isfinite, isinf
 from numbers import Real
 
 from acceptance import AcceptanceDataError
@@ -42,6 +42,15 @@ def test_real_data_economics_contract_and_scenario_relationships():
     )
 
 
+def test_payback_is_infinite_when_unit_contribution_is_non_positive():
+    """A loss-making sale can never repay customer acquisition cost."""
+    price = 0.62
+    channel = "DTC Online"
+    month = 7
+
+    assert economics.unit_contribution(price, channel) <= 0
+    assert isinf(economics.payback_months(price, channel, month))
+
 def test_economics_rejects_invalid_inputs_and_unsupported_prices():
     try:
         economics.unit_contribution(0, "DTC Online")
@@ -71,5 +80,6 @@ def test_economics_rejects_invalid_inputs_and_unsupported_prices():
 
 if __name__ == "__main__":
     test_real_data_economics_contract_and_scenario_relationships()
+    test_payback_is_infinite_when_unit_contribution_is_non_positive()
     test_economics_rejects_invalid_inputs_and_unsupported_prices()
     print("test_economics.py: all tests passed")
