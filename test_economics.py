@@ -1,61 +1,85 @@
-from math import inf, isfinite
+from math import isfinite, isinf
+from numbers import Real
 
+from acceptance import AcceptanceDataError
 import economics
-from constants import SALES_CHANNELS
 
 
-def _stub_acceptance_rate(price: float, channel: str) -> float:
-    return 0.5
+def _assert_positive_finite(value: float) -> None:
+    assert isinstance(value, Real)
+    assert isfinite(value)
+    assert value > 0
 
 
-def test_economics_contract_functions_work_with_task_b_stubbed():
-    economics.acceptance_rate = _stub_acceptance_rate
-
+def test_real_data_economics_contract_and_scenario_relationships():
+    """Exercise every public economics function with the real project data."""
+    channel = "DTC Online"
     price = 2.19
-    channel = SALES_CHANNELS[0]
+    july = 7
+
+    unit = economics.unit_contribution(price, channel)
+    monthly = economics.monthly_contribution(price, channel, july)
+    lifetime = economics.customer_lifetime_months()
+    lifetime_value = economics.ltv(price, channel)
+    payback = economics.payback_months(price, channel, july)
+    ratio = economics.ltv_cac_ratio(price, channel)
+
+    for value in (unit, monthly, lifetime, lifetime_value, payback, ratio):
+        _assert_positive_finite(value)
+
+    february_monthly = economics.monthly_contribution(price, channel, 2)
+    july_monthly = economics.monthly_contribution(price, channel, july)
+    february_payback = economics.payback_months(price, channel, 2)
+    july_payback = economics.payback_months(price, channel, july)
+    assert july_monthly > february_monthly
+    assert july_payback < february_payback
+
+    lower_price = 1.79
+    higher_price = 2.19
+    assert economics.unit_contribution(higher_price, channel) > economics.unit_contribution(lower_price, channel)
+    assert economics.payback_months(higher_price, channel, july) < economics.payback_months(
+        lower_price, channel, july
+    )
+
+
+def test_payback_is_infinite_when_unit_contribution_is_non_positive():
+    """A loss-making sale can never repay customer acquisition cost."""
+    price = 0.62
+    channel = "DTC Online"
     month = 7
 
-    assert economics.unit_contribution(price, channel) > 0
-    assert economics.monthly_contribution(price, channel, month) > 0
-    assert economics.customer_lifetime_months() > 0
-    assert economics.ltv(price, channel) > 0
-    assert isfinite(economics.payback_months(price, channel, month))
-    assert economics.ltv_cac_ratio(price, channel) > 0
+    assert economics.unit_contribution(price, channel) <= 0
+    assert isinf(economics.payback_months(price, channel, month))
 
+def test_economics_rejects_invalid_inputs_and_unsupported_prices():
+    try:
+        economics.unit_contribution(0, "DTC Online")
+        assert False, "invalid price must raise ValueError"
+    except ValueError:
+        pass
 
-def test_launch_month_changes_the_result():
-    economics.acceptance_rate = _stub_acceptance_rate
+    try:
+        economics.unit_contribution(2.19, "Unsupported channel")
+        assert False, "invalid channel must raise ValueError"
+    except ValueError:
+        pass
 
-    winter = economics.monthly_contribution(2.19, "DTC Online", 2)
-    summer = economics.monthly_contribution(2.19, "DTC Online", 7)
+    try:
+        economics.monthly_contribution(2.19, "DTC Online", 13)
+        assert False, "invalid month must raise ValueError"
+    except ValueError:
+        pass
 
-    assert winter != summer
-    assert summer > winter
-
-
-def test_higher_contribution_shortens_payback():
-    economics.acceptance_rate = _stub_acceptance_rate
-
-    low_contribution_price = 1.79
-    high_contribution_price = 2.19
-
-    assert economics.unit_contribution(high_contribution_price, "DTC Online") > economics.unit_contribution(
-        low_contribution_price, "DTC Online"
-    )
-    assert economics.payback_months(high_contribution_price, "DTC Online", 7) < economics.payback_months(
-        low_contribution_price, "DTC Online", 7
-    )
-
-
-def test_payback_is_infinite_when_contribution_is_not_positive():
-    economics.acceptance_rate = _stub_acceptance_rate
-
-    assert economics.payback_months(0.5, "DTC Online", 7) == inf
+    for unsupported_price in (0.61, 3.10):
+        try:
+            economics.monthly_contribution(unsupported_price, "DTC Online", 7)
+            assert False, "prices outside observed support must raise AcceptanceDataError"
+        except AcceptanceDataError:
+            pass
 
 
 if __name__ == "__main__":
-    test_economics_contract_functions_work_with_task_b_stubbed()
-    test_launch_month_changes_the_result()
-    test_higher_contribution_shortens_payback()
-    test_payback_is_infinite_when_contribution_is_not_positive()
+    test_real_data_economics_contract_and_scenario_relationships()
+    test_payback_is_infinite_when_unit_contribution_is_non_positive()
+    test_economics_rejects_invalid_inputs_and_unsupported_prices()
     print("test_economics.py: all tests passed")
