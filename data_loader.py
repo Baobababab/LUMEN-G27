@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any
 
+from functools import lru_cache
 import pandas as pd
 
 
@@ -52,6 +53,7 @@ def _anomaly_report(history: pd.DataFrame, seasonality: pd.DataFrame) -> dict[st
     }
 
 
+@lru_cache(maxsize=1)
 def load_all() -> dict[str, pd.DataFrame]:
     """Load every CSV in ``data/`` and apply the documented cleaning rules."""
     global _report
