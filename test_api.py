@@ -1,3 +1,5 @@
+import json
+
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
@@ -101,6 +103,24 @@ def test_api_returns_a_safe_error_for_unsupported_price():
         assert error.detail["message"] == "Acceptance evidence is unavailable for this scenario."
 
 
+def test_api_serializes_non_recoverable_payback_as_null_without_non_finite_text():
+    client = TestClient(app)
+    response = client.post(
+        "/api/scenario",
+        json={"price": 0.62, "channel": "DTC Online", "month": 1},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    payback_detail = next(item for item in payload["metric_details"] if item["key"] == "payback_months")
+    assert payload["metrics"]["payback_months"] is None
+    assert payback_detail["value"] is None
+    visible_text = [*payload["reasons"], payload["trade_off"], payback_detail["comparison"], *payload["perspectives"]["cfo"]["points"]]
+    assert any("Not recoverable" in text for text in visible_text)
+    assert all(token not in " ".join(visible_text).lower() for token in ("inf", "infinity", "nan"))
+    assert all(token not in json.dumps(payload).lower() for token in ("inf", "infinity", "nan"))
+
+
 def test_api_hides_synthetic_identifiers_and_has_no_raw_data_routes():
     client = TestClient(app)
     sentinel = "synthetic-respondent-id"
@@ -145,6 +165,27 @@ def test_compare_api_supports_one_to_three_scenarios_with_backend_deltas():
     assert payload["differences"][1]["monthly_contribution_eur"] == 0
     assert payload["differences"][0]["monthly_contribution_eur"] != 0
     _assert_aggregated(payload)
+
+
+def test_compare_api_uses_null_for_non_recoverable_payback_differences():
+    client = TestClient(app)
+    response = client.post(
+        "/api/compare",
+        json={
+            "include_analysis": True,
+            "scenarios": [
+                {"price": 0.62, "channel": "DTC Online", "month": 1},
+                {"price": 0.62, "channel": "DTC Online", "month": 2},
+            ]
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert all(item["metrics"]["payback_months"] is None for item in payload["scenarios"])
+    assert all(item["payback_months"] is None for item in payload["differences"])
+    assert payload["analysis"]["launch_timing"]["selected_month"]["payback_months"] is None
+    assert all(token not in json.dumps(payload).lower() for token in ("inf", "infinity", "nan"))
 
 
 def test_compare_api_rejects_more_than_three_scenarios_without_echoing_input():

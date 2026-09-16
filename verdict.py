@@ -16,6 +16,11 @@ from economics import ltv_cac_ratio, payback_months
 _METRIC_ORDER = ("ltv_cac_ratio", "payback_months", "acceptance_rate")
 
 
+def format_payback_months(value: float | None) -> str:
+    """Return manager-facing payback text without exposing non-finite values."""
+    return f"{value:.2f} months" if value is not None and isfinite(value) else "Not recoverable"
+
+
 def _validate_inputs(
     price: float, channel: str, month: int, payback_horizon_months: float
 ) -> tuple[float, int, float]:
@@ -65,6 +70,11 @@ def _conditional_assumption(metric: str, values: dict[str, float], horizon: floa
             f"to {TARGET_LTV_CAC:.2f}."
         )
     if metric == "payback_months":
+        if not isfinite(values[metric]):
+            return (
+                "Assumption: payback must become recoverable within the "
+                f"{horizon:.2f}-month horizon."
+            )
         return (
             f"Assumption: the acceptable payback horizon must increase from {horizon:.2f} "
             f"to {values[metric]:.2f} months."
@@ -80,7 +90,7 @@ def _trade_off(values: dict[str, float], passed: dict[str, bool], horizon: float
     acceptance_pass = passed["acceptance_rate"]
     summary = (
         f"LTV:CAC is {values['ltv_cac_ratio']:.2f} against {TARGET_LTV_CAC:.2f}; "
-        f"payback is {values['payback_months']:.2f} months against {horizon:.2f}; "
+        f"payback is {format_payback_months(values['payback_months'])} against {horizon:.2f} months; "
         f"acceptance is {values['acceptance_rate']:.1%} against {ACCEPTANCE_FLOOR:.1%}."
     )
     if economics_pass and not acceptance_pass:
@@ -116,7 +126,7 @@ def verdict(
     reasons = [
         f"LTV:CAC {values['ltv_cac_ratio']:.2f} vs {TARGET_LTV_CAC:.2f}: "
         f"{'PASS' if passed['ltv_cac_ratio'] else 'FAIL'}.",
-        f"Payback {values['payback_months']:.2f} months vs {horizon:.2f}: "
+        f"Payback {format_payback_months(values['payback_months'])} vs {horizon:.2f} months: "
         f"{'PASS' if passed['payback_months'] else 'FAIL'}.",
         f"Acceptance {values['acceptance_rate']:.1%} vs {ACCEPTANCE_FLOOR:.1%}: "
         f"{'PASS' if passed['acceptance_rate'] else 'FAIL'}.",

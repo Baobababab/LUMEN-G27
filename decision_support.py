@@ -1,11 +1,11 @@
 """Aggregated price-sensitivity and launch-timing analysis."""
 
 from decimal import Decimal
-from math import isfinite
+from math import inf, isfinite
 
 from constants import ACCEPTANCE_FLOOR, OBSERVED_PRICE_SUPPORT, SALES_CHANNELS, TARGET_LTV_CAC
 from data_loader import load_all
-from verdict import verdict
+from verdict import format_payback_months, verdict
 
 
 PRICE_GRID_STEP_EUR = Decimal("0.02")
@@ -102,7 +102,7 @@ def launch_timing(month: int, metrics: dict) -> dict:
     best_index = max(indices.values())
     best_months = [item for item, value in indices.items() if value == best_index]
     monthly_contribution = float(metrics["monthly_contribution_eur"])
-    payback = float(metrics["payback_months"])
+    payback = float(metrics["payback_months"]) if metrics["payback_months"] is not None else inf
     best_contribution = monthly_contribution * best_index / selected_index
     best_payback = payback * selected_index / best_index if isfinite(payback) else None
 
@@ -113,7 +113,7 @@ def launch_timing(month: int, metrics: dict) -> dict:
             "seasonality_index": selected_index,
             "rank_of_12": 1 + sum(value > selected_index for value in indices.values()),
             "monthly_contribution_eur": monthly_contribution,
-            "payback_months": payback,
+            "payback_months": payback if isfinite(payback) else None,
         },
         "most_favorable_window": {
             "months": [_MONTH_NAMES[item - 1] for item in best_months],
@@ -168,7 +168,7 @@ def _metric_changes(before: dict, after: dict) -> tuple[list[str], list[str]]:
         if key == "acceptance_rate":
             change = f"{name}: {old:.1%} to {new:.1%}"
         elif key == "payback_months":
-            change = f"{name}: {old:.2f} to {new:.2f}{suffix}"
+            change = f"{name}: {format_payback_months(old)} to {format_payback_months(new)}"
         else:
             change = f"{name}: {old:.2f} to {new:.2f}{suffix}"
         (improvements if (new - old) * better_direction > 0 else trade_offs).append(change)
