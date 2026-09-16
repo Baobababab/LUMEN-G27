@@ -42,8 +42,8 @@ function showResult(data) {
 }
 
 function scenarioFrom(fields) {
-  const data = new FormData(fields);
-  return { price: Number(data.get("price")), channel: data.get("channel"), month: Number(data.get("month")), payback_horizon_months: Number(data.get("payback_horizon_months")) };
+  const value = (name) => fields.elements.namedItem(name).value;
+  return { price: Number(value("price")), channel: value("channel"), month: Number(value("month")), payback_horizon_months: Number(value("payback_horizon_months")) };
 }
 
 function refreshScenarioLabels() {
@@ -100,10 +100,10 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
   result.hidden = true;
   statusMessage.textContent = "Calculating scenarios…";
-  const scenarios = [...scenariosElement.querySelectorAll(".scenario-fields")].map(scenarioFrom);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
+    const scenarios = [...scenariosElement.querySelectorAll(".scenario-fields")].map(scenarioFrom);
     const response = await fetch("/api/compare", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarios }), signal: controller.signal });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.detail?.reason || payload.detail?.message || payload.detail || "Scenario unavailable.");
