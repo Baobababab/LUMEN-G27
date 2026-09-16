@@ -525,6 +525,22 @@ La fase termina con un massimo contenuto di alternative utili per dimensione. Il
 - testi usano `Model adjustments` e dichiarano che non costituiscono promessa commerciale; nessun ottimizzatore multi-obiettivo o combinazione automatica è stato aggiunto;
 - test sintetici coprono `GO`, `CONDITIONAL`, `NO-GO`, assenza di miglioramenti, ordinamento, limiti e vincolo a una sola variabile; test API e frontend verificano contratto aggregato e rendering backend.
 
+### Postilla 5A: presentazione orientata alla decisione
+
+Questa postilla non modifica ranking, formule, soglie, contratti API o condizioni della Fase 5. Rende invece leggibile il suo scopo manageriale: aiutare a valutare un cambiamento minimo quando lo scenario non passa.
+
+- la sezione appare alla fine della pagina, dopo qualità dati, e si chiama `Ways to improve this scenario`;
+- ogni proposta usa un titolo discorsivo, per esempio `Consider launching in July`, invece di concatenare verdetto, nome campo e valori tecnici;
+- il testo chiarisce il nuovo verdetto, la sola modifica applicata, gli input fissi, il miglioramento e gli eventuali trade-off in un breve paragrafo;
+- la pagina conserva fino a tre leve distinte e la dichiarazione che sono aggiustamenti del modello, non promesse commerciali;
+- non si aggiungono pulsanti che applicano automaticamente scenari, nuove analisi o logica nel browser.
+
+**Risultato della Postilla 5A, 2026-09-16**
+
+- sezione spostata alla fine dei risultati e rinominata `Ways to improve this scenario`;
+- titoli tecnici e blocchi ripetitivi sostituiti da proposte discorsive fornite dal backend;
+- test frontend verifica rendering del titolo backend e assenza del vecchio sottotitolo tecnico.
+
 ### Fase 6: modalità stampa
 
 **File probabilmente coinvolti**

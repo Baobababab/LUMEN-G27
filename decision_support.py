@@ -183,7 +183,7 @@ def model_adjustments(
     if baseline["verdict"] == "GO":
         return {
             "status": "not_needed",
-            "summary": "This scenario already meets all approved decision thresholds.",
+            "summary": "This scenario already meets all approved decision thresholds, so no adjustment is needed.",
             "alternatives": [],
         }
 
@@ -204,19 +204,23 @@ def model_adjustments(
         improvements, trade_offs = _metric_changes(baseline["metrics"], candidate["metrics"])
         if change_type == "price":
             change = f"Retail price: EUR {price:.2f} to EUR {candidate_price:.2f}"
+            headline = f"Consider a retail price of EUR {candidate_price:.2f}"
             held_constant = "Sales channel, launch month, and payback horizon stay fixed."
             tie_break = (0, candidate_price)
         elif change_type == "channel":
             change = f"Sales channel: {channel} to {candidate_channel}"
+            headline = f"Consider {candidate_channel} as the initial sales channel"
             held_constant = "Retail price, launch month, and payback horizon stay fixed."
             tie_break = (1, SALES_CHANNELS.index(candidate_channel))
         else:
             change = f"Launch month: {_MONTH_NAMES[month - 1]} to {_MONTH_NAMES[candidate_month - 1]}"
+            headline = f"Consider launching in {_MONTH_NAMES[candidate_month - 1]}"
             held_constant = "Retail price, sales channel, and payback horizon stay fixed."
             tie_break = (2, candidate_month)
         adjustments.append(
             {
                 "change": change,
+                "headline": headline,
                 "verdict": candidate["verdict"],
                 "inputs": {
                     "price": candidate_price,
@@ -249,9 +253,9 @@ def model_adjustments(
     return {
         "status": "alternatives_available" if alternatives else "no_single_variable_improvement",
         "summary": (
-            "Model adjustments improve this scenario under approved decision rules. They do not promise a commercial outcome."
+            "This scenario does not yet meet every decision threshold. The model tested one change at a time to show the strongest supported ways to improve it."
             if alternatives
-            else "No one-variable model adjustment improves this scenario under approved decision rules."
+            else "The model tested one change at a time but found no supported adjustment that improves this scenario."
         ),
         "alternatives": alternatives,
     }
