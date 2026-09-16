@@ -137,7 +137,7 @@ Il test di non esposizione controllerà almeno:
 
 ## Ordine di costruzione
 
-Le fasi dipendono l'una dall'altra in questo ordine: `Fase 0 → Fase 1 → Fase 2 → Fase 3 → Postilla 3A → Fase 4 → Fase 5 → Postilla 5A → Postilla 5B → Fase 6 → Fase 7`. Ogni fase parte da `main` aggiornata dopo il merge della fase precedente. Il team non prepara in parallelo codice destinato a una fase successiva.
+Le fasi dipendono l'una dall'altra in questo ordine: `Fase 0 → Fase 1 → Fase 2 → Fase 3 → Postilla 3A → Fase 4 → Fase 5 → Postilla 5A → Postilla 5B → Postilla 5C → Fase 6 → Fase 7`. Ogni fase parte da `main` aggiornata dopo il merge della fase precedente. Il team non prepara in parallelo codice destinato a una fase successiva.
 
 ### Fase 0: privacy baseline, prima delle funzioni
 
@@ -593,6 +593,52 @@ La postilla termina quando ogni scenario non approvato può aprire il proprio pe
 - l'azione riusa la selezione baseline e la richiesta backend esistenti, senza cambiare endpoint, formule o ranking;
 - la sezione finale identifica lo scenario selezionato e dichiara che le proposte si applicano solo a quello;
 - test API con due scenari verifica che `model_adjustments` segue `baseline_index`; test frontend verifica l'azione e il contesto.
+
+### Postilla 5C: stato visibile anche per una baseline GO
+
+**Esito dell'audit**
+
+Gli input segnalati — EUR 2,19, `DTC Online`, January e orizzonte 12 mesi — producono correttamente `GO`: LTV:CAC 6,04 contro 3,00, payback 10,78 mesi contro 12,00 e accettabilità 65,5% contro 35,0%. Production mostra lo stesso risultato.
+
+La sezione finale manca per una condizione intenzionale ma poco chiara. `/api/compare` chiama `model_adjustments` soltanto quando la baseline non è `GO`; di conseguenza il frontend non riceve dati e mantiene nascosta l'intera sezione. Tuttavia `model_adjustments` gestisce già `GO` con lo stato `not_needed`, una spiegazione e una lista vuota. Questo stato esistente non è raggiungibile attraverso l'API pubblica. Non si tratta quindi di un errore nei valori inseriti, nel modello o nel deployment, ma di un'integrazione incompleta tra un risultato backend già previsto e la risposta API.
+
+**Soluzione minima proposta**
+
+`/api/compare` restituisce sempre `model_adjustments` per la baseline selezionata. Per `GO`, riusa lo stato backend esistente `not_needed`, che termina prima della ricerca dei candidati: la sezione finale diventa visibile, dichiara che lo scenario supera già tutte le soglie approvate e non mostra proposte correttive. Per `CONDITIONAL` e `NO-GO`, contenuto, ranking e massimo di tre alternative restano invariati.
+
+Non vengono inventati miglioramenti per uno scenario `GO`, non cambia il verdetto e non si aggiungono formule nel browser. Le schede di confronto `GO` continuano a non mostrare `Review ways to improve`, perché quella azione serve soltanto a raggiungere suggerimenti correttivi da una scheda non selezionata; la baseline `GO` mostra invece il proprio stato conclusivo nella sezione finale.
+
+**File probabilmente coinvolti**
+
+- `api/index.py`, per esporre lo stato già restituito da `model_adjustments` anche per `GO`;
+- `public/app.js`, soltanto se serve distinguere chiaramente lo stato vuoto senza duplicare testi backend;
+- `test_api.py`, `test_public_app.py` e, soltanto se cambia il contratto interno, `test_decision_support.py`;
+- `README.md`, se la checklist descrive quando appare la sezione;
+- `IMPLEMENTATION_PLAN.md` e prompt log della fase.
+
+**Criteri di accettazione**
+
+- la combinazione EUR 2,19, `DTC Online`, January e 12 mesi mostra una sezione finale visibile per Scenario 1;
+- la sezione dichiara che tutte le soglie approvate sono superate e che non serve un aggiustamento correttivo;
+- lo stato `not_needed` contiene zero alternative e non avvia la scansione di prezzi, canali o mesi;
+- passando da una baseline non approvata a una `GO`, le proposte precedenti vengono rimosse e sostituite dal messaggio `not_needed`;
+- passando da `GO` a `CONDITIONAL` o `NO-GO`, le alternative continuano a essere calcolate come oggi;
+- le schede non selezionate `GO` non mostrano l'azione correttiva;
+- la risposta resta aggregata e non espone identificativi o righe sorgente;
+- verdetti, formule, soglie, ranking e limite di tre alternative non cambiano.
+
+**Test necessari**
+
+- test API con gli input segnalati che verifica `GO`, `model_adjustments.status == "not_needed"` e lista vuota;
+- test unitario che dimostra l'uscita anticipata per `GO` senza valutare candidati;
+- test frontend che verifica la sezione visibile e priva di schede alternative per `not_needed`;
+- test frontend del passaggio `NO-GO → GO → NO-GO`, per escludere contenuti obsoleti;
+- regressione multi-scenario: azione presente soltanto sulle schede non selezionate `CONDITIONAL` o `NO-GO`;
+- smoke test Production con gli input segnalati.
+
+**Condizione di arresto**
+
+La postilla termina quando ogni baseline valutata produce una sezione finale esplicita: alternative per `CONDITIONAL` e `NO-GO`, oppure conferma che non servono correzioni per `GO`. Dopo test mirati, suite completa, documentazione, prompt log e pull request, il team si ferma senza iniziare la Fase 6.
 
 ### Fase 6: modalità stampa
 
