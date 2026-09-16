@@ -47,6 +47,7 @@ button:hover { background: #0f482d; }
 .baseline-badge[hidden] { display: none; }
 .comparison-card { border-top: 1px solid #dce4dc; padding: 14px 0; color: #647066; }
 .comparison-card--selected { color: #17201c; }
+.review-adjustments { margin-top: 4px; }
 .adjustment-card { border-top: 1px solid #dce4dc; padding: 16px 0; }
 .adjustment-card h3 { margin-bottom: 6px; font-size: 1.05rem; }
 .adjustment-card p, .adjustment-limit { color: #46544b; }

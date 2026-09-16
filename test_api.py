@@ -213,3 +213,19 @@ def test_compare_api_does_not_add_a_corrective_path_for_a_go_baseline():
 
     assert response.status_code == 200
     assert "model_adjustments" not in response.json()
+
+
+def test_compare_api_model_adjustments_follow_the_selected_baseline():
+    client = TestClient(app)
+    scenarios = [
+        {"price": 2.19, "channel": "DTC Online", "month": 7},
+        {"price": 1.79, "channel": "DTC Online", "month": 1},
+    ]
+
+    go_baseline = client.post("/api/compare", json={"scenarios": scenarios, "baseline_index": 0})
+    non_go_baseline = client.post("/api/compare", json={"scenarios": scenarios, "baseline_index": 1})
+
+    assert go_baseline.status_code == non_go_baseline.status_code == 200
+    assert "model_adjustments" not in go_baseline.json()
+    assert non_go_baseline.json()["model_adjustments"]["status"] in {"alternatives_available", "no_single_variable_improvement"}
+    _assert_aggregated(non_go_baseline.json()["model_adjustments"])

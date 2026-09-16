@@ -587,6 +587,13 @@ Non si calcolano in parallelo gli aggiustamenti per tutti e tre gli scenari: tri
 
 La postilla termina quando ogni scenario non approvato può aprire il proprio percorso di miglioramento attraverso la baseline esistente. Dopo test mirati, suite completa, documentazione, prompt log e pull request, il team si ferma senza iniziare la Fase 6.
 
+**Risultato della Postilla 5B, 2026-09-16**
+
+- ogni scheda di confronto non selezionata con verdetto `CONDITIONAL` o `NO-GO` offre `Review ways to improve Scenario N`;
+- l'azione riusa la selezione baseline e la richiesta backend esistenti, senza cambiare endpoint, formule o ranking;
+- la sezione finale identifica lo scenario selezionato e dichiara che le proposte si applicano solo a quello;
+- test API con due scenari verifica che `model_adjustments` segue `baseline_index`; test frontend verifica l'azione e il contesto.
+
 ### Fase 6: modalità stampa
 
 **File probabilmente coinvolti**

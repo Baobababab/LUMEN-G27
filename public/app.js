@@ -96,7 +96,8 @@ function showComparison(payload) {
     const signedMoney = `${delta.monthly_contribution_eur >= 0 ? "+" : ""}${money(delta.monthly_contribution_eur)}`;
     const signedLtv = `${delta.lifetime_value_eur >= 0 ? "+" : ""}${money(delta.lifetime_value_eur)}`;
     const difference = isBaseline ? "Selected baseline. Differences are zero." : `Monthly contribution vs selected baseline: ${signedMoney}. LTV vs selected baseline: ${signedLtv}.`;
-    return `<article class="comparison-card${isBaseline ? " comparison-card--selected" : ""}"><h3>Scenario ${index + 1}: ${item.verdict}</h3><p>${item.trade_off}</p><p>${difference}</p></article>`;
+    const review = !isBaseline && item.verdict !== "GO" ? `<button type="button" class="secondary review-adjustments" data-baseline-index="${index}">Review ways to improve Scenario ${index + 1}</button>` : "";
+    return `<article class="comparison-card${isBaseline ? " comparison-card--selected" : ""}"><h3>Scenario ${index + 1}: ${item.verdict}</h3><p>${item.trade_off}</p><p>${difference}</p>${review}</article>`;
   }).join("");
 }
 
@@ -115,9 +116,10 @@ function showAnalysis(data) {
   analysis.hidden = false;
 }
 
-function showAdjustments(data) {
+function showAdjustments(data, baselineIndex) {
   if (!data) return;
-  document.querySelector("#adjustments-summary").textContent = data.summary;
+  document.querySelector("#adjustments-title").textContent = `Ways to improve Scenario ${baselineIndex + 1}`;
+  document.querySelector("#adjustments-summary").textContent = `These model-tested adjustments apply only to selected Scenario ${baselineIndex + 1}. ${data.summary}`;
   document.querySelector("#adjustment-results").innerHTML = data.alternatives.map((item) => {
     const improvements = item.improvements.join(". ") || "No approved decision metric improves.";
     const tradeOffs = item.trade_offs.length ? `The model also shows this trade-off: ${item.trade_offs.join(". ")}.` : "No approved decision metric worsens under this change.";
@@ -133,6 +135,13 @@ function setExplanations(open) {
 document.querySelector("#expand-details").addEventListener("click", () => setExplanations(true));
 document.querySelector("#collapse-details").addEventListener("click", () => setExplanations(false));
 document.querySelector("#add-scenario").addEventListener("click", () => addScenario());
+comparisonResults.addEventListener("click", (event) => {
+  const review = event.target.closest(".review-adjustments");
+  if (!review) return;
+  scenariosElement.querySelectorAll("[name=baseline]")[Number(review.dataset.baselineIndex)].checked = true;
+  refreshScenarioLabels();
+  form.requestSubmit();
+});
 scenariosElement.addEventListener("change", (event) => {
   if (event.target.name !== "baseline") return;
   refreshScenarioLabels();
@@ -169,7 +178,7 @@ form.addEventListener("submit", async (event) => {
     showResult(payload.scenarios[payload.baseline_index]);
     showComparison(payload);
     showAnalysis(payload.analysis);
-    showAdjustments(payload.model_adjustments);
+    showAdjustments(payload.model_adjustments, payload.baseline_index);
     showAnalysisButton.hidden = false;
     statusMessage.textContent = scenarios.length === 1 ? "Scenario evaluated." : "Scenarios compared.";
   } catch (error) {

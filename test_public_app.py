@@ -35,8 +35,21 @@ def test_public_app_renders_backend_model_adjustments_without_calculating_them()
     script = Path("public/app.js").read_text(encoding="utf-8")
     page = Path("public/index.html").read_text(encoding="utf-8")
 
-    assert "showAdjustments(payload.model_adjustments)" in script
+    assert "showAdjustments(payload.model_adjustments, payload.baseline_index)" in script
     assert "item.headline" in script
     assert "Ways to improve this scenario" in page
     assert page.index('id="adjustments"') > page.index('id="data-quality"')
     assert "CONDITIONAL: Sales channel" not in script
+
+
+def test_public_app_can_select_each_non_go_scenario_for_its_adjustments():
+    script = Path("public/app.js").read_text(encoding="utf-8")
+    page = Path("public/index.html").read_text(encoding="utf-8")
+
+    assert 'item.verdict !== "GO"' in script
+    assert "Review ways to improve Scenario ${index + 1}" in script
+    assert "data-baseline-index" in script
+    assert "form.requestSubmit();" in script
+    assert 'id="adjustments-title"' in page
+    assert "Ways to improve Scenario ${baselineIndex + 1}" in script
+    assert "apply only to selected Scenario ${baselineIndex + 1}" in script
