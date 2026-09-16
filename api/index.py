@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from acceptance import AcceptanceDataError
 from constants import DEFAULT_PAYBACK_HORIZON_MONTHS
@@ -29,6 +29,13 @@ class ScenarioCompareRequest(BaseModel):
     """One to three scenarios for a backend-calculated comparison."""
 
     scenarios: Annotated[list[ScenarioRequest], Field(min_length=1, max_length=3)]
+    baseline_index: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def baseline_must_reference_a_scenario(self):
+        if self.baseline_index >= len(self.scenarios):
+            raise ValueError("Baseline must reference a supplied scenario.")
+        return self
 
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
@@ -264,9 +271,10 @@ def evaluate_scenario(request: ScenarioRequest) -> dict:
 def compare_scenarios(request: ScenarioCompareRequest) -> dict:
     """Return up to three existing scenario results and backend-calculated deltas."""
     scenarios = [evaluate_scenario(item) for item in request.scenarios]
-    baseline = scenarios[0]["metrics"]
+    baseline = scenarios[request.baseline_index]["metrics"]
     return {
         "scenarios": scenarios,
+        "baseline_index": request.baseline_index,
         "differences": [
             {
                 "unit_contribution_eur": item["metrics"]["unit_contribution_eur"] - baseline["unit_contribution_eur"],
