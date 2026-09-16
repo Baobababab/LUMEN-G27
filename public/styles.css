@@ -44,6 +44,7 @@ button:hover { background: #0f482d; }
 .baseline-control { display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; color: inherit; font-size: .85rem; font-weight: 400; }
 .baseline-control input { width: auto; padding: 0; }
 .baseline-badge { display: inline-block; margin-left: 8px; border-radius: 999px; padding: 3px 8px; background: #dff2e6; color: #155d3a; font-size: .75rem; }
+.baseline-badge[hidden] { display: none; }
 .comparison-card { border-top: 1px solid #dce4dc; padding: 14px 0; color: #647066; }
 .comparison-card--selected { color: #17201c; }
 .decision { border-left: 6px solid #155d3a; }

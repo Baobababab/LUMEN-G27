@@ -14,3 +14,9 @@ def test_public_app_sends_and_renders_the_selected_baseline():
     assert "baseline_index: selectedBaselineIndex()" in script
     assert "showResult(payload.scenarios[payload.baseline_index])" in script
     assert "Selected baseline. Differences are zero." in script
+
+
+def test_hidden_baseline_badge_overrides_its_display_style():
+    stylesheet = Path("public/styles.css").read_text(encoding="utf-8")
+
+    assert ".baseline-badge[hidden] { display: none; }" in stylesheet
