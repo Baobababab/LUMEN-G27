@@ -282,6 +282,13 @@ Le etichette accessibile, premium e molto premium possono sembrare dati di merca
 
 La fase termina con il pannello M3 funzionante. Il team non aggiunge mappe di brand, competitor esterni o punteggi di percezione inventati.
 
+**Risultato della Fase 2, 2026-09-16**
+
+- API confronta il prezzo selezionato con i concorrenti osservati nello stesso canale e formato;
+- pannelli CMO e CFO riusano lo stesso scenario e lo stesso verdetto;
+- nessun concorrente, soglia o verdetto aggiuntivo viene inventato;
+- 4 test API, 12 test completi e controllo sintattico JavaScript passano localmente con Python 3.11; CI Python 3.12 resta gate ufficiale.
+
 ### Fase 3: confronto di massimo tre scenari e confronto canali
 
 **File probabilmente coinvolti**

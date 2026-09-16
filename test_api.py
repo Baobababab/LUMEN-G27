@@ -44,6 +44,8 @@ def test_api_returns_only_aggregated_scenario_results():
         "trade_off",
         "metrics",
         "metric_details",
+        "competitive_positioning",
+        "perspectives",
         "data_quality",
     }
     assert "customer_survey" not in result["metrics"]
@@ -74,6 +76,9 @@ def test_api_returns_only_aggregated_scenario_results():
     }[result["decided_by"]]
     assert details[driver_key]["state"] == "monitor"
     assert details["unit_contribution_eur"]["comparison"] == "No approved decision threshold."
+    assert result["competitive_positioning"]["competitors"]
+    assert result["competitive_positioning"]["label"] in {"Accessible", "Premium", "Very premium"}
+    assert set(result["perspectives"]) == {"cmo", "cfo"}
     _assert_aggregated(result)
 
 
