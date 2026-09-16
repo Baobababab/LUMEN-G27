@@ -101,17 +101,20 @@ form.addEventListener("submit", async (event) => {
   result.hidden = true;
   statusMessage.textContent = "Calculating scenarios…";
   const scenarios = [...scenariosElement.querySelectorAll(".scenario-fields")].map(scenarioFrom);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetch("/api/compare", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarios }) });
+    const response = await fetch("/api/compare", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarios }), signal: controller.signal });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.detail?.reason || payload.detail?.message || payload.detail || "Scenario unavailable.");
     showResult(payload.scenarios[0]);
     showComparison(payload);
     statusMessage.textContent = scenarios.length === 1 ? "Scenario evaluated." : "Scenarios compared.";
   } catch (error) {
-    statusMessage.textContent = error.message;
+    statusMessage.textContent = error.name === "AbortError" ? "Scenario request timed out. Try again." : error.message;
+  } finally {
+    clearTimeout(timeout);
   }
 });
 
 refreshScenarioLabels();
-form.requestSubmit();
