@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from acceptance import AcceptanceDataError
 from constants import ACCEPTANCE_FLOOR, TARGET_LTV_CAC
-from verdict import verdict
+from verdict import format_payback_months, verdict
 
 
 def _scenario(ltv_ratio: float, payback: float, acceptance: float, horizon: float = 12.0) -> dict:
@@ -95,6 +95,15 @@ def test_payback_horizon_and_invalid_inputs_and_data_error_propagation():
     with patch("verdict.acceptance_rate", side_effect=AcceptanceDataError("unsupported price")):
         _assert_raises(AcceptanceDataError, 2.19, "DTC Online", 7)
     assert _scenario(3.0, inf, ACCEPTANCE_FLOOR)["verdict"] == "CONDITIONAL"
+
+
+def test_non_finite_payback_uses_manager_facing_text():
+    result = _scenario(3.0, inf, ACCEPTANCE_FLOOR)
+
+    assert format_payback_months(12.345) == "12.35 months"
+    assert format_payback_months(inf) == "Not recoverable"
+    assert all("inf" not in text.lower() for text in [*result["reasons"], result["trade_off"]])
+    assert any("Not recoverable" in text for text in [*result["reasons"], result["trade_off"]])
 
 
 if __name__ == "__main__":

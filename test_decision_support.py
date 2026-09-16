@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from math import inf
 
 import pandas as pd
 
@@ -111,3 +112,13 @@ def test_model_adjustments_skip_go_and_report_when_no_single_change_improves():
 
     assert result["status"] == "no_single_variable_improvement"
     assert result["alternatives"] == []
+
+
+def test_model_adjustment_text_never_exposes_non_finite_payback():
+    before = _decision("NO-GO", ltv=2.0, payback=inf, acceptance=0.3)
+    after = _decision("CONDITIONAL", ltv=3.1, payback=11, acceptance=0.4)
+
+    improvements, trade_offs = decision_support._metric_changes(before["metrics"], after["metrics"])
+
+    assert any("Not recoverable" in item for item in improvements + trade_offs)
+    assert all("inf" not in item.lower() for item in improvements + trade_offs)

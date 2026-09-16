@@ -175,6 +175,13 @@ The results page places metric-reading guidance directly below Decision metrics,
 separate panel. On desktop, decision metrics use a three-column grid. The final sections appear in
 this order: model adjustments, Data quality and cleaning, then Print evaluation.
 
+### Post-audit Phase A: safe non-recoverable payback
+
+Non-finite payback values remain nullable numeric API fields. All manager-visible verdict,
+metric, perspective, adjustment, and browser text now uses `Not recoverable`; it never exposes
+`inf`, `Infinity`, or `NaN`. Comparison deltas are nullable when either payback is non-recoverable.
+Focused tests and the complete suite passed locally before the phase pull request.
+
 ## Mandatory phase stop protocol
 
 After each phase:

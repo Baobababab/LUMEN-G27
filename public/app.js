@@ -16,6 +16,7 @@ const money = (value) => new Intl.NumberFormat("en-IE", {
 }).format(value);
 
 function metricValue(metric) {
+  if (metric.value === null || !Number.isFinite(metric.value)) return "Not recoverable";
   if (metric.unit === "percentage") return `${(metric.value * 100).toFixed(1)}%`;
   if (metric.unit === "currency") return money(metric.value);
   if (metric.unit === "ratio") return `${metric.value.toFixed(2)}x`;

@@ -79,6 +79,14 @@ rendering.
   non-finite token.
 - Run focused tests, the complete suite, the JavaScript syntax check, and the privacy tests.
 
+### Completion record
+
+Implemented on branch `fix/nonfinite-payback`. The API keeps non-recoverable payback and its
+comparison delta as `null`; manager-visible text uses `Not recoverable`. Optional launch-month
+analysis handles the nullable value. Added regression coverage for verdict text, API serialization,
+comparison deltas, adjustment text, and frontend metric formatting. Focused tests passed 34 tests;
+the full suite passed 39 tests; `node --check public/app.js` and `python -m compileall .` passed.
+
 ## Phase B — Separate machine keys from management language
 
 **Findings:** T2 and T3. This phase depends on Phase A so every driver description can safely format

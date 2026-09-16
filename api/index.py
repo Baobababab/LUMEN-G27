@@ -1,5 +1,6 @@
 """Vercel API for the LUMEN Germany launch-scenario tool."""
 
+from math import isfinite
 from typing import Annotated, Literal
 
 from fastapi import FastAPI, HTTPException, Request
@@ -12,7 +13,7 @@ from constants import DEFAULT_PAYBACK_HORIZON_MONTHS
 from data_loader import cleaning_report, load_all
 from decision_support import model_adjustments, scenario_analysis
 from economics import ltv, monthly_contribution, unit_contribution
-from verdict import verdict
+from verdict import format_payback_months, verdict
 
 
 class ScenarioRequest(BaseModel):
@@ -161,7 +162,7 @@ def _metric_details(metrics: dict, decision_metrics: dict, decided_by: str) -> l
             "marketing_funnel_monthly.csv and calculated monthly contribution",
             "The selected payback horizon defines the decision threshold.",
             "The result depends on the selected launch month and its seasonal index.",
-            f"{metrics['payback_months']:.2f} months against {metrics['payback_horizon_months']:.2f}-month horizon.",
+            f"{format_payback_months(metrics['payback_months'])} against {metrics['payback_horizon_months']:.2f}-month horizon.",
         ),
     ]
 
@@ -212,7 +213,7 @@ def _perspectives(metrics: dict, positioning: dict) -> dict:
             "points": [
                 f"Unit contribution: EUR {metrics['unit_contribution_eur']:.2f}.",
                 f"Lifetime value to customer acquisition cost: {metrics['ltv_cac_ratio']:.2f}x.",
-                f"Payback: {metrics['payback_months']:.2f} months.",
+                f"Payback: {format_payback_months(metrics['payback_months'])}.",
             ],
         },
     }
@@ -237,7 +238,11 @@ def evaluate_scenario(request: ScenarioRequest) -> dict:
             ),
             "lifetime_value_eur": ltv(request.price, request.channel),
             "ltv_cac_ratio": decision_metrics["ltv_cac_ratio"],
-            "payback_months": decision_metrics["payback_months"],
+            "payback_months": (
+                decision_metrics["payback_months"]
+                if isfinite(decision_metrics["payback_months"])
+                else None
+            ),
             "target_ltv_cac": decision_metrics["target_ltv_cac"],
             "payback_horizon_months": decision_metrics["payback_horizon_months"],
             "acceptance_floor": decision_metrics["acceptance_floor"],
@@ -283,7 +288,12 @@ def compare_scenarios(request: ScenarioCompareRequest) -> dict:
                 "monthly_contribution_eur": item["metrics"]["monthly_contribution_eur"] - baseline["monthly_contribution_eur"],
                 "lifetime_value_eur": item["metrics"]["lifetime_value_eur"] - baseline["lifetime_value_eur"],
                 "ltv_cac_ratio": item["metrics"]["ltv_cac_ratio"] - baseline["ltv_cac_ratio"],
-                "payback_months": item["metrics"]["payback_months"] - baseline["payback_months"],
+                "payback_months": (
+                    item["metrics"]["payback_months"] - baseline["payback_months"]
+                    if item["metrics"]["payback_months"] is not None
+                    and baseline["payback_months"] is not None
+                    else None
+                ),
             }
             for item in scenarios
         ],

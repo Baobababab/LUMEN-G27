@@ -16,6 +16,13 @@ def test_public_app_sends_and_renders_the_selected_baseline():
     assert "Selected baseline. Differences are zero." in script
 
 
+def test_public_app_renders_a_null_metric_as_not_recoverable_before_formatting():
+    script = Path("public/app.js").read_text(encoding="utf-8")
+
+    assert 'metric.value === null || !Number.isFinite(metric.value)' in script
+    assert 'return "Not recoverable";' in script
+
+
 def test_hidden_baseline_badge_overrides_its_display_style():
     stylesheet = Path("public/styles.css").read_text(encoding="utf-8")
 
