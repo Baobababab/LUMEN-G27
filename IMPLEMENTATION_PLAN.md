@@ -137,7 +137,7 @@ Il test di non esposizione controllerà almeno:
 
 ## Ordine di costruzione
 
-Le fasi dipendono l'una dall'altra in questo ordine: `Fase 0 → Fase 1 → Fase 2 → Fase 3 → Postilla 3A → Fase 4 → Fase 5 → Fase 6 → Fase 7`. Ogni fase parte da `main` aggiornata dopo il merge della fase precedente. Il team non prepara in parallelo codice destinato a una fase successiva.
+Le fasi dipendono l'una dall'altra in questo ordine: `Fase 0 → Fase 1 → Fase 2 → Fase 3 → Postilla 3A → Fase 4 → Fase 5 → Postilla 5A → Postilla 5B → Fase 6 → Fase 7`. Ogni fase parte da `main` aggiornata dopo il merge della fase precedente. Il team non prepara in parallelo codice destinato a una fase successiva.
 
 ### Fase 0: privacy baseline, prima delle funzioni
 
@@ -540,6 +540,52 @@ Questa postilla non modifica ranking, formule, soglie, contratti API o condizion
 - sezione spostata alla fine dei risultati e rinominata `Ways to improve this scenario`;
 - titoli tecnici e blocchi ripetitivi sostituiti da proposte discorsive fornite dal backend;
 - test frontend verifica rendering del titolo backend e assenza del vecchio sottotitolo tecnico.
+
+### Postilla 5B: accesso ai suggerimenti dagli altri scenari
+
+**Esito dell'audit**
+
+Il calcolo non è legato ai valori usati durante lo sviluppo. `/api/compare` produce un solo oggetto `model_adjustments`, riferito esclusivamente allo scenario indicato da `baseline_index`, e lo omette quando quella baseline è `GO`. La prova live con due scenari diversi ha confermato che anche Scenario 2 riceve suggerimenti corretti quando viene selezionato come baseline. Il problema è quindi di accesso e comprensione: dalla scheda di un altro scenario `CONDITIONAL` o `NO-GO` non esiste un percorso evidente verso i suoi suggerimenti. Inoltre, i test API correnti verificano gli aggiustamenti soltanto con uno scenario.
+
+**Soluzione minima proposta**
+
+Si conserva un solo scenario attivo e un solo calcolo di aggiustamenti per richiesta. Nella scheda di confronto di ogni scenario non selezionato con verdetto `CONDITIONAL` o `NO-GO` compare l'azione `Review ways to improve Scenario N`. L'azione seleziona quello scenario come baseline usando il meccanismo già esistente e invia di nuovo gli input correnti al backend. I pannelli dettagliati e la sezione finale vengono quindi aggiornati insieme.
+
+La sezione finale usa il titolo `Ways to improve Scenario N` e una frase esplicita che la collega alla baseline selezionata. Uno scenario `GO` non mostra l'azione, perché non richiede un percorso correttivo. L'azione non applica automaticamente alcun suggerimento e non modifica prezzo, canale, mese o orizzonte.
+
+Non si calcolano in parallelo gli aggiustamenti per tutti e tre gli scenari: triplicherebbe nel caso peggiore il lavoro del modello, allungherebbe la risposta e produrrebbe fino a nove proposte contemporanee. Non servono nuovi endpoint, nuove formule o un nuovo formato API.
+
+**File probabilmente coinvolti**
+
+- `public/app.js`, per il collegamento tra scheda di confronto e baseline;
+- `public/index.html`, soltanto per il testo contestuale della sezione finale;
+- `public/styles.css`, soltanto per lo stato visivo e il focus dell'azione;
+- `test_api.py` e `test_public_app.py`;
+- `README.md`, se la descrizione del confronto richiede il chiarimento;
+- `IMPLEMENTATION_PLAN.md` e prompt log della fase.
+
+**Criteri di accettazione**
+
+- con una baseline `GO` e un altro scenario `CONDITIONAL` o `NO-GO`, la scheda non selezionata offre l'azione per esaminare i suoi suggerimenti;
+- l'azione seleziona lo scenario corretto, invia il relativo `baseline_index` e aggiorna confronto, recommendation, metriche e sezione finale;
+- il titolo finale identifica il numero dello scenario selezionato e non lascia intendere che le proposte valgano per tutti gli scenari;
+- due o tre scenari non approvati possono essere esaminati uno dopo l'altro senza risultati obsoleti;
+- una baseline `GO` mantiene nascosta la sezione finale e le schede `GO` non mostrano azioni correttive;
+- rimozione della baseline, timeout ed errore non lasciano visibili suggerimenti appartenenti allo scenario precedente;
+- controllo e stato sono comprensibili da tastiera e senza dipendere soltanto dal colore;
+- formule, ranking e contratto aggregato della Fase 5 restano invariati.
+
+**Test necessari**
+
+- test API con più scenari che dimostra che `model_adjustments` segue `baseline_index` e non il primo scenario;
+- test frontend che verifica l'azione soltanto sulle schede non selezionate e non `GO`;
+- test frontend del passaggio Scenario 1 → Scenario 2 → Scenario 3, compreso l'invio dell'indice corretto e la pulizia dei risultati precedenti;
+- test di regressione per rimozione della baseline, timeout, errori e assenza di logica economica nel browser;
+- smoke test reale con una baseline `GO` e almeno due scenari non approvati.
+
+**Condizione di arresto**
+
+La postilla termina quando ogni scenario non approvato può aprire il proprio percorso di miglioramento attraverso la baseline esistente. Dopo test mirati, suite completa, documentazione, prompt log e pull request, il team si ferma senza iniziare la Fase 6.
 
 ### Fase 6: modalità stampa
 
