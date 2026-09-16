@@ -77,8 +77,9 @@ def test_labels_assumptions_trade_offs_and_deterministic_decisions():
         assert result["reasons"]
         assert result["trade_off"]
         assert "LTV:CAC" in result["trade_off"]
-    assert "returns over customer reach" in _scenario(3.5, 10.0, 0.2)["trade_off"]
-    assert "Prioritises reach" in _scenario(2.5, 13.0, 0.5)["trade_off"]
+    assert "below its approved floor" in _scenario(3.5, 10.0, 0.2)["trade_off"]
+    assert "economic metrics miss their approved thresholds" in _scenario(2.5, 13.0, 0.5)["trade_off"]
+    assert "Prioritises" not in _scenario(2.5, 13.0, 0.5)["trade_off"]
 
 
 def test_payback_horizon_and_invalid_inputs_and_data_error_propagation():

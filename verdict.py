@@ -94,12 +94,12 @@ def _trade_off(values: dict[str, float], passed: dict[str, bool], horizon: float
         f"acceptance is {values['acceptance_rate']:.1%} against {ACCEPTANCE_FLOOR:.1%}."
     )
     if economics_pass and not acceptance_pass:
-        return f"Prioritises returns over customer reach: {summary}"
+        return f"Price acceptability is below its approved floor; economic metrics meet their approved thresholds: {summary}"
     if acceptance_pass and not economics_pass:
-        return f"Prioritises reach while accepting weaker returns or slower CAC recovery: {summary}"
+        return f"Price acceptability meets its approved floor; one or more economic metrics miss their approved thresholds: {summary}"
     if economics_pass:
-        return f"Balances returns and customer reach: {summary}"
-    return f"Sacrifices both customer reach and economic returns: {summary}"
+        return f"All approved decision metrics meet their thresholds: {summary}"
+    return f"Price acceptability and one or more economic metrics miss their approved thresholds: {summary}"
 
 
 def verdict(

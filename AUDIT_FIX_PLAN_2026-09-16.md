@@ -115,6 +115,15 @@ payback.
 - Prove scenario-delta copy still uses relative language where the API supplies the delta.
 - Run focused tests, the complete suite, JavaScript checks, and privacy tests.
 
+### Completion record
+
+Implemented on branch `fix/manager-decision-language`. The API retains `decided_by` and adds a
+business label and threshold context. Trade-off text now describes only approved threshold status.
+Users can apply an adjustment to the selected scenario and re-evaluate it as the baseline. Added
+coverage for business driver labels, GO/CONDITIONAL/NO-GO context, all channels’ threshold wording,
+and the frontend apply action. Focused tests passed 27 tests; the full suite passed 41 tests;
+`node --check public/app.js` and `python -m compileall .` passed.
+
 ## Phase C — Bound inputs and make API failures actionable
 
 **Findings:** R1, R2, and Q1. This phase follows the response-contract changes in Phase B to avoid

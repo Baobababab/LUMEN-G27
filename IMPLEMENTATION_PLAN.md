@@ -182,6 +182,15 @@ metric, perspective, adjustment, and browser text now uses `Not recoverable`; it
 `inf`, `Infinity`, or `NaN`. Comparison deltas are nullable when either payback is non-recoverable.
 Focused tests and the complete suite passed locally before the phase pull request.
 
+### Post-audit Phase B: manager decision language
+
+The stable `decided_by` machine key remains in the API. A separate manager-facing driver now gives
+the metric label, its threshold context, and the deterministic selection rule: largest proportional
+miss for a failed threshold, or smallest safety margin for a passing decision. Trade-off language
+states approved threshold performance without implying a relative scenario comparison. A model
+adjustment can replace the selected scenario inputs and evaluate that alternative as the new
+baseline. Focused tests and the complete suite passed locally before the phase pull request.
+
 ## Mandatory phase stop protocol
 
 After each phase:

@@ -14,6 +14,8 @@ def test_public_app_sends_and_renders_the_selected_baseline():
     assert "baseline_index: selectedBaselineIndex()" in script
     assert "showResult(payload.scenarios[payload.baseline_index])" in script
     assert "Selected baseline. Differences are zero." in script
+    assert "Decision driver: ${data.decision_driver.label}" in script
+    assert "Decision driver: ${data.decided_by}" not in script
 
 
 def test_public_app_renders_a_null_metric_as_not_recoverable_before_formatting():
@@ -55,12 +57,15 @@ def test_public_app_can_select_each_non_go_scenario_for_its_adjustments():
     page = Path("public/index.html").read_text(encoding="utf-8")
 
     assert 'item.verdict !== "GO"' in script
-    assert "Review ways to improve Scenario ${index + 1}" in script
+    assert "Review model adjustments for Scenario ${index + 1}" in script
     assert "data-baseline-index" in script
     assert "form.requestSubmit();" in script
     assert 'id="adjustments-title"' in page
     assert "Ways to improve Scenario ${baselineIndex + 1}" in script
-    assert "apply only to selected Scenario ${baselineIndex + 1}" in script
+    assert "Evaluate as selected baseline" in script
+    assert "Select an alternative to replace the inputs in Scenario ${baselineIndex + 1}" in script
+    assert "adjustmentAlternatives" in script
+    assert "scenario.elements.namedItem(name).value = value" in script
 
 
 def test_public_app_uses_native_print_with_a_printable_evaluation_record():
