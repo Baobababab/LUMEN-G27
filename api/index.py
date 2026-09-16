@@ -2,7 +2,9 @@
 
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from acceptance import AcceptanceDataError
@@ -24,6 +26,12 @@ class ScenarioRequest(BaseModel):
 
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+
+
+@app.exception_handler(RequestValidationError)
+def invalid_scenario_request(_: Request, __: RequestValidationError) -> JSONResponse:
+    """Reject invalid public input without returning submitted values."""
+    return JSONResponse(status_code=422, content={"detail": "Invalid scenario input."})
 
 
 @app.post("/api/scenario")
