@@ -2,8 +2,10 @@ import json
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from api.index import ScenarioRequest, _decision_driver, _metric_state, app, evaluate_scenario
+from constants import MAX_PAYBACK_HORIZON_MONTHS
 
 
 _FORBIDDEN_KEYS = {"respondent_id", "first_name", "last_name", "email"}
@@ -133,6 +135,22 @@ def test_api_returns_a_safe_error_for_unsupported_price():
     except HTTPException as error:
         assert error.status_code == 422
         assert error.detail["message"] == "Acceptance evidence is unavailable for this scenario."
+
+
+def test_payback_horizon_has_matching_api_and_direct_validation_bounds():
+    client = TestClient(app)
+    for horizon in (1, MAX_PAYBACK_HORIZON_MONTHS):
+        response = client.post("/api/scenario", json={"price": 2.19, "channel": "DTC Online", "month": 7, "payback_horizon_months": horizon})
+        assert response.status_code == 200
+    for horizon in (0, -1, MAX_PAYBACK_HORIZON_MONTHS + 1, 1e308):
+        response = client.post("/api/scenario", json={"price": 2.19, "channel": "DTC Online", "month": 7, "payback_horizon_months": horizon})
+        assert response.status_code == 422
+        assert response.json() == {"detail": "Invalid scenario input."}
+        try:
+            ScenarioRequest(price=2.19, channel="DTC Online", month=7, payback_horizon_months=horizon)
+            assert False, "Pydantic validation must reject this horizon"
+        except ValidationError:
+            pass
 
 
 def test_api_serializes_non_recoverable_payback_as_null_without_non_finite_text():

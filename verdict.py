@@ -9,7 +9,7 @@ from math import isfinite
 from numbers import Real
 
 from acceptance import acceptance_rate
-from constants import ACCEPTANCE_FLOOR, SALES_CHANNELS, TARGET_LTV_CAC
+from constants import ACCEPTANCE_FLOOR, MAX_PAYBACK_HORIZON_MONTHS, SALES_CHANNELS, TARGET_LTV_CAC
 from economics import ltv_cac_ratio, payback_months
 
 
@@ -40,8 +40,8 @@ def _validate_inputs(
     if isinstance(payback_horizon_months, bool) or not isinstance(payback_horizon_months, Real):
         raise ValueError("payback_horizon_months must be a positive finite number")
     horizon = float(payback_horizon_months)
-    if not isfinite(horizon) or horizon <= 0:
-        raise ValueError("payback_horizon_months must be a positive finite number")
+    if not isfinite(horizon) or not 0 < horizon <= MAX_PAYBACK_HORIZON_MONTHS:
+        raise ValueError(f"payback_horizon_months must be between 0 and {MAX_PAYBACK_HORIZON_MONTHS:g}")
     return numeric_price, month, horizon
 
 
