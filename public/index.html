@@ -18,7 +18,7 @@
       <form id="scenario-form" class="panel">
         <div id="scenarios">
           <fieldset class="scenario-fields scenario-fields--selected"><legend><span class="scenario-title">Scenario 1</span><label class="baseline-control"><input name="baseline" type="radio" value="0" checked> Use as baseline</label><span class="baseline-badge">Selected baseline</span></legend><div class="controls">
-            <label>Retail price (EUR)<input name="price" type="number" min="0.01" step="0.01" value="2.19" required></label>
+            <label>Retail price (EUR)<input name="price" type="number" min="0.62" max="3.09" step="0.01" value="2.19" required></label>
             <label>Sales channel<select name="channel"><option>DTC Online</option><option>Retail/Grocery</option><option>Gym &amp; Office</option></select></label>
             <label>Launch month<select name="month"><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></label>
             <label>Payback horizon (months)<input name="payback_horizon_months" type="number" min="0.01" step="0.01" value="12" required></label>
@@ -26,11 +26,13 @@
         </div>
         <p class="detail-controls"><button id="add-scenario" type="button" class="secondary">Add scenario</button><button id="compare-channels" type="button" class="secondary">Compare channels</button></p>
         <button type="submit">Evaluate scenarios</button>
+        <button id="show-analysis" type="button" class="secondary" hidden>Show model sensitivity and month analysis</button>
       </form>
 
       <p id="status" class="status" aria-live="polite"></p>
       <section id="result" hidden>
         <section id="comparison" class="panel" hidden><h2>Scenario comparison</h2><div id="comparison-results"></div></section>
+        <section id="analysis" class="panel" hidden><h2>Model sensitivity and launch month</h2><div id="price-sensitivity"></div><div id="launch-timing"></div></section>
         <div class="panel decision"><p class="eyebrow">Recommendation</p><h2 id="verdict"></h2><p id="driver"></p><p id="trade-off"></p></div>
         <section class="panel"><h2>Competitive position</h2><p id="positioning-summary"></p><ul id="competitors"></ul></section>
         <section class="perspectives"><article class="panel"><h2 id="cmo-title"></h2><ul id="cmo-points"></ul></article><article class="panel"><h2 id="cfo-title"></h2><ul id="cfo-points"></ul></article></section>

@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from acceptance import AcceptanceDataError
 from constants import DEFAULT_PAYBACK_HORIZON_MONTHS
 from data_loader import cleaning_report, load_all
+from decision_support import scenario_analysis
 from economics import ltv, monthly_contribution, unit_contribution
 from verdict import verdict
 
@@ -30,6 +31,7 @@ class ScenarioCompareRequest(BaseModel):
 
     scenarios: Annotated[list[ScenarioRequest], Field(min_length=1, max_length=3)]
     baseline_index: int = Field(default=0, ge=0)
+    include_analysis: bool = False
 
     @model_validator(mode="after")
     def baseline_must_reference_a_scenario(self):
@@ -272,7 +274,7 @@ def compare_scenarios(request: ScenarioCompareRequest) -> dict:
     """Return up to three existing scenario results and backend-calculated deltas."""
     scenarios = [evaluate_scenario(item) for item in request.scenarios]
     baseline = scenarios[request.baseline_index]["metrics"]
-    return {
+    response = {
         "scenarios": scenarios,
         "baseline_index": request.baseline_index,
         "differences": [
@@ -286,3 +288,13 @@ def compare_scenarios(request: ScenarioCompareRequest) -> dict:
             for item in scenarios
         ],
     }
+    if request.include_analysis:
+        selected = request.scenarios[request.baseline_index]
+        response["analysis"] = scenario_analysis(
+            selected.price,
+            selected.channel,
+            selected.month,
+            selected.payback_horizon_months,
+            scenarios[request.baseline_index]["metrics"],
+        )
+    return response

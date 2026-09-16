@@ -5,6 +5,9 @@ const result = document.querySelector("#result");
 const metricsElement = document.querySelector("#metrics");
 const comparison = document.querySelector("#comparison");
 const comparisonResults = document.querySelector("#comparison-results");
+const analysis = document.querySelector("#analysis");
+const showAnalysisButton = document.querySelector("#show-analysis");
+let analysisRequested = false;
 
 const money = (value) => new Intl.NumberFormat("en-IE", {
   style: "currency", currency: "EUR", minimumFractionDigits: 2,
@@ -96,6 +99,21 @@ function showComparison(payload) {
   }).join("");
 }
 
+function showAnalysis(data) {
+  if (!data) return;
+  const sensitivity = data.price_sensitivity;
+  const interval = sensitivity.contiguous_interval;
+  const changes = sensitivity.nearest_verdict_changes.map((change) => `${money(change.from.price_eur)} ${change.from.verdict} to ${money(change.to.price_eur)} ${change.to.verdict}`).join("; ") || "No adjacent verdict change in observed support.";
+  document.querySelector("#price-sensitivity").innerHTML = `<h3>Price sensitivity</h3><p>${interval.verdict} from ${money(interval.from_price_eur)} to ${money(interval.to_price_eur)} around selected price. Grid resolution: ${money(sensitivity.grid_step_eur)}; ${sensitivity.evaluation_count} of ${sensitivity.max_evaluations} allowed price evaluations.</p><p>Nearest verdict changes: ${changes}</p><p>${sensitivity.method} ${sensitivity.limit}</p>`;
+  const timing = data.launch_timing;
+  const selected = timing.selected_month;
+  const window = timing.most_favorable_window;
+  const payback = Number.isFinite(selected.payback_months) ? `${selected.payback_months.toFixed(2)} months` : "Not recoverable";
+  const paybackChange = timing.payback_change_to_best_months === null ? "not available" : `${timing.payback_change_to_best_months.toFixed(2)} months`;
+  document.querySelector("#launch-timing").innerHTML = `<h3>Launch month</h3><p>${selected.name} has seasonal index ${selected.seasonality_index} and ranks ${selected.rank_of_12} of 12. Monthly contribution: ${money(selected.monthly_contribution_eur)}. Payback: ${payback}.</p><p>Most favourable supplied window: ${window.months.join(", ")} (index ${window.seasonality_index}). At the same price and channel, monthly contribution changes by ${money(timing.monthly_contribution_change_to_best_eur)} and payback changes by ${paybackChange}.</p><p>${timing.limit}</p>`;
+  analysis.hidden = false;
+}
+
 function setExplanations(open) {
   document.querySelectorAll(".explanation").forEach((detail) => { detail.open = open; });
 }
@@ -118,20 +136,27 @@ document.querySelector("#compare-channels").addEventListener("click", () => {
   });
   refreshScenarioLabels();
 });
+showAnalysisButton.addEventListener("click", () => {
+  analysisRequested = true;
+  form.requestSubmit();
+});
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   result.hidden = true;
+  analysis.hidden = true;
   statusMessage.textContent = "Calculating scenarios…";
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
     const scenarios = [...scenariosElement.querySelectorAll(".scenario-fields")].map(scenarioFrom);
-    const response = await fetch("/api/compare", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarios, baseline_index: selectedBaselineIndex() }), signal: controller.signal });
+    const response = await fetch("/api/compare", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarios, baseline_index: selectedBaselineIndex(), include_analysis: analysisRequested }), signal: controller.signal });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.detail?.reason || payload.detail?.message || payload.detail || "Scenario unavailable.");
     showResult(payload.scenarios[payload.baseline_index]);
     showComparison(payload);
+    showAnalysis(payload.analysis);
+    showAnalysisButton.hidden = false;
     statusMessage.textContent = scenarios.length === 1 ? "Scenario evaluated." : "Scenarios compared.";
   } catch (error) {
     statusMessage.textContent = error.name === "AbortError" ? "Scenario request timed out. Try again." : error.message;
