@@ -119,7 +119,7 @@ function showAnalysis(data) {
 function showAdjustments(data, baselineIndex) {
   if (!data) return;
   document.querySelector("#adjustments-title").textContent = `Ways to improve Scenario ${baselineIndex + 1}`;
-  document.querySelector("#adjustments-summary").textContent = `These model-tested adjustments apply only to selected Scenario ${baselineIndex + 1}. ${data.summary}`;
+  document.querySelector("#adjustments-summary").textContent = data.status === "not_needed" ? data.summary : `These model-tested adjustments apply only to selected Scenario ${baselineIndex + 1}. ${data.summary}`;
   document.querySelector("#adjustment-results").innerHTML = data.alternatives.map((item) => {
     const improvements = item.improvements.join(". ") || "No approved decision metric improves.";
     const tradeOffs = item.trade_offs.length ? `The model also shows this trade-off: ${item.trade_offs.join(". ")}.` : "No approved decision metric worsens under this change.";

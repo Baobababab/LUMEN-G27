@@ -204,15 +204,22 @@ def test_compare_api_returns_aggregated_model_adjustments_only_for_a_non_go_base
     _assert_aggregated(adjustments)
 
 
-def test_compare_api_does_not_add_a_corrective_path_for_a_go_baseline():
+def test_compare_api_returns_a_no_correction_state_for_a_go_baseline():
     client = TestClient(app)
     response = client.post(
         "/api/compare",
-        json={"scenarios": [{"price": 2.19, "channel": "DTC Online", "month": 7}]},
+        json={"scenarios": [{"price": 2.19, "channel": "DTC Online", "month": 1, "payback_horizon_months": 12}]},
     )
 
     assert response.status_code == 200
-    assert "model_adjustments" not in response.json()
+    payload = response.json()
+    assert payload["scenarios"][0]["verdict"] == "GO"
+    assert payload["model_adjustments"] == {
+        "status": "not_needed",
+        "summary": "This scenario already meets all approved decision thresholds, so no adjustment is needed.",
+        "alternatives": [],
+    }
+    _assert_aggregated(payload["model_adjustments"])
 
 
 def test_compare_api_model_adjustments_follow_the_selected_baseline():
@@ -226,6 +233,6 @@ def test_compare_api_model_adjustments_follow_the_selected_baseline():
     non_go_baseline = client.post("/api/compare", json={"scenarios": scenarios, "baseline_index": 1})
 
     assert go_baseline.status_code == non_go_baseline.status_code == 200
-    assert "model_adjustments" not in go_baseline.json()
+    assert go_baseline.json()["model_adjustments"]["status"] == "not_needed"
     assert non_go_baseline.json()["model_adjustments"]["status"] in {"alternatives_available", "no_single_variable_improvement"}
     _assert_aggregated(non_go_baseline.json()["model_adjustments"])

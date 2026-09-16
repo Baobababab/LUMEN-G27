@@ -40,6 +40,7 @@ def test_public_app_renders_backend_model_adjustments_without_calculating_them()
     assert "Ways to improve this scenario" in page
     assert page.index('id="adjustments"') > page.index('id="data-quality"')
     assert "CONDITIONAL: Sales channel" not in script
+    assert 'data.status === "not_needed" ? data.summary' in script
 
 
 def test_public_app_can_select_each_non_go_scenario_for_its_adjustments():
