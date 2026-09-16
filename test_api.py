@@ -123,3 +123,33 @@ def test_api_hides_synthetic_identifiers_and_has_no_raw_data_routes():
         assert raw_response.status_code == 404
         assert sentinel not in raw_response.text
         _assert_aggregated(raw_response.json())
+
+
+def test_compare_api_supports_one_to_three_scenarios_with_backend_deltas():
+    client = TestClient(app)
+    response = client.post(
+        "/api/compare",
+        json={
+            "scenarios": [
+                {"price": 2.19, "channel": "DTC Online", "month": 7},
+                {"price": 2.19, "channel": "Retail/Grocery", "month": 7},
+            ]
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload["scenarios"]) == len(payload["differences"]) == 2
+    assert payload["differences"][0]["monthly_contribution_eur"] == 0
+    assert payload["differences"][1]["monthly_contribution_eur"] != 0
+    _assert_aggregated(payload)
+
+
+def test_compare_api_rejects_more_than_three_scenarios_without_echoing_input():
+    client = TestClient(app)
+    sentinel = "synthetic-fourth-scenario"
+    scenario = {"price": 2.19, "channel": "DTC Online", "month": 7}
+    response = client.post("/api/compare", json={"scenarios": [scenario, scenario, scenario, {**scenario, "tag": sentinel}]})
+
+    assert response.status_code == 422
+    assert sentinel not in response.text
