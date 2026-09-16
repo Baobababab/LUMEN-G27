@@ -166,3 +166,25 @@ def test_compare_api_rejects_a_baseline_outside_the_scenarios():
 
     assert response.status_code == 422
     assert response.json() == {"detail": "Invalid scenario input."}
+
+
+def test_compare_api_returns_optional_selected_scenario_analysis_with_aggregate_limits():
+    client = TestClient(app)
+    response = client.post(
+        "/api/compare",
+        json={
+            "baseline_index": 1,
+            "include_analysis": True,
+            "scenarios": [
+                {"price": 2.19, "channel": "DTC Online", "month": 7},
+                {"price": 2.19, "channel": "Retail/Grocery", "month": 7},
+            ],
+        },
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()["analysis"]
+    assert analysis["price_sensitivity"]["selected_price_eur"] == 2.19
+    assert analysis["price_sensitivity"]["evaluation_count"] <= 250
+    assert analysis["launch_timing"]["selected_month"]["number"] == 7
+    _assert_aggregated(analysis)

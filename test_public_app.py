@@ -20,3 +20,12 @@ def test_hidden_baseline_badge_overrides_its_display_style():
     stylesheet = Path("public/styles.css").read_text(encoding="utf-8")
 
     assert ".baseline-badge[hidden] { display: none; }" in stylesheet
+
+
+def test_public_app_requests_and_renders_optional_backend_analysis_only():
+    script = Path("public/app.js").read_text(encoding="utf-8")
+
+    assert "include_analysis: analysisRequested" in script
+    assert "Show model sensitivity and month analysis" in Path("public/index.html").read_text(encoding="utf-8")
+    assert "Grid resolution" in script
+    assert "seasonality_and_weather.csv" not in script

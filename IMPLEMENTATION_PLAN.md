@@ -461,6 +461,16 @@ Una griglia fine può rallentare una funzione Vercel. Il team userà caching dei
 
 La fase termina con una risposta entro il budget misurato e una spiegazione dei limiti. Il team non aggiunge forecast, simulazioni Monte Carlo, meteo live o causalità stagionale.
 
+**Risultato della Fase 4, 2026-09-16**
+
+- `/api/compare` calcola l'analisi opzionale per una sola baseline selezionata, mai per tutti gli scenari; la risposta resta aggregata;
+- la sensibilità valuta griglia EUR 0,02, estremi EUR 0,62 e EUR 3,09 e prezzo selezionato, con massimo effettivo di 126 valutazioni sotto limite rigido 250;
+- il backend raggruppa intervalli contigui di identico verdetto e restituisce solo i due cambi più vicini; non assume monotonicità dell'accettabilità;
+- benchmark locale ripetuto con cache dati calda, Python 3.11, DTC Online, luglio e orizzonte 12 mesi: mediana EUR 0,01 = 3.901 ms (248 punti), EUR 0,02 = 1.892 ms (125), EUR 0,05 = 768 ms (51); budget 2.500 ms, quindi passo EUR 0,02;
+- l'interfaccia dichiara EUR 0,02 come risoluzione di griglia, non precisione economica, e chiama il risultato sensibilità del modello;
+- l'analisi del mese usa soltanto gli indici di `seasonality_and_weather.csv`, restituisce rango sui dodici mesi, finestra migliore anche a parità, contributo e payback a parità di prezzo, canale e orizzonte;
+- test sintetici coprono verdetti non monotoni, estremi, prezzo fuori griglia, limite, dodici mesi e parità; test API e frontend verificano il contratto aggregato e l'assenza di formule JavaScript.
+
 ### Fase 5: percorso per migliorare lo scenario
 
 **File probabilmente coinvolti**
