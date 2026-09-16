@@ -137,7 +137,7 @@ Il test di non esposizione controllerà almeno:
 
 ## Ordine di costruzione
 
-Le fasi dipendono l'una dall'altra in questo ordine: `Fase 0 → Fase 1 → Fase 2 → Fase 3 → Fase 4 → Fase 5 → Fase 6 → Fase 7`. Ogni fase parte da `main` aggiornata dopo il merge della fase precedente. Il team non prepara in parallelo codice destinato a una fase successiva.
+Le fasi dipendono l'una dall'altra in questo ordine: `Fase 0 → Fase 1 → Fase 2 → Fase 3 → Postilla 3A → Fase 4 → Fase 5 → Fase 6 → Fase 7`. Ogni fase parte da `main` aggiornata dopo il merge della fase precedente. Il team non prepara in parallelo codice destinato a una fase successiva.
 
 ### Fase 0: privacy baseline, prima delle funzioni
 
@@ -340,6 +340,63 @@ La fase termina al confronto in memoria di tre scenari. Il team non aggiunge acc
 - il comando "Compare channels" genera i tre canali ufficiali mantenendo invariati prezzo, mese e orizzonte;
 - lo stato rimane solo nel browser fino a refresh o chiusura; nessun account, database, cronologia o esportazione è stato aggiunto;
 - la checklist README documenta ora la scelta di storage temporaneo.
+
+### Postilla 3A: scenario selezionato come baseline del confronto
+
+Questa postilla completa il confronto prima della Fase 4. Lo Scenario 1 resta selezionato per impostazione predefinita, ma l'utente può scegliere uno qualunque degli scenari presenti come baseline. Il verdetto, le metriche, il posizionamento competitivo e i pannelli CMO/CFO mostrano sempre lo scenario selezionato. Gli altri scenari mostrano differenze rispetto a quella baseline.
+
+**Interazione e presentazione**
+
+- ogni scheda scenario offre un controllo esplicito in inglese, per esempio `Use as baseline`;
+- la scheda selezionata mantiene fondo bianco, bordo più evidente e indicazione testuale `Selected baseline`;
+- le schede non selezionate usano fondo grigio chiaro e testo secondario più tenue, ma conservano contrasto leggibile;
+- colore e contrasto non sono l'unico segnale: stato selezionato, controllo e testo devono essere percepibili anche da tastiera e tecnologie assistive;
+- il riepilogo del confronto conserva l'ordine Scenario 1, 2 e 3 e identifica chiaramente la baseline;
+- quando cambia la selezione dopo una valutazione, il frontend invia una nuova richiesta con gli input correnti. Non ricalcola differenze economiche nel browser.
+
+**Contratto API**
+
+`/api/compare` accetta `baseline_index` insieme agli scenari, con valore predefinito `0`. Il backend verifica che l'indice appartenga alla lista ricevuta, calcola tutte le differenze rispetto allo scenario selezionato e restituisce `baseline_index` nella risposta. Lo scenario baseline ha differenze pari a zero. L'ordine degli scenari non cambia.
+
+**File probabilmente coinvolti**
+
+- `api/index.py`
+- `public/index.html`
+- `public/app.js`
+- `public/styles.css`
+- `test_api.py`
+- `test_public_app.py`
+- `README.md`, se la checklist richiede un chiarimento sull'interazione
+- `IMPLEMENTATION_PLAN.md`
+- prompt log della postilla
+
+**Criteri di accettazione**
+
+- con uno scenario, quello scenario è sempre la baseline;
+- con due o tre scenari, l'utente può selezionare qualsiasi scenario senza cambiarne l'ordine;
+- pannelli dettagliati e verdetto appartengono allo scenario selezionato;
+- ogni differenza restituita usa lo scenario selezionato come riferimento;
+- rimuovendo la baseline, l'interfaccia seleziona il primo scenario rimasto;
+- aggiungere o duplicare uno scenario non cambia la baseline esistente;
+- selezione e stato visivo funzionano da tastiera e non dipendono soltanto dal colore;
+- il browser non contiene formule economiche e non conserva lo stato dopo refresh o chiusura.
+
+**Test necessari**
+
+- test API con `baseline_index` uguale a 0, 1 e 2;
+- test API per indice negativo o fuori dalla lista ricevuta;
+- test che verifica differenze zero per la baseline e differenze corrette per gli altri scenari;
+- test di regressione privacy sulla nuova risposta aggregata;
+- smoke test browser per selezione, aggiornamento pannelli e rimozione della baseline;
+- controllo tastiera, contrasto e viewport mobile.
+
+**Rischi e limiti**
+
+Un'intera scheda cliccabile può cambiare baseline mentre l'utente modifica un input. La selezione userà quindi un controllo esplicito. Il grigio non userà opacità sull'intera scheda, perché ridurrebbe anche la leggibilità dei campi. La postilla non aggiunge metriche, persistenza, confronto automatico continuo o nuove regole decisionali.
+
+**Condizione di arresto**
+
+La postilla termina quando uno dei tre scenari può guidare sia i pannelli dettagliati sia le differenze backend. Dopo test mirati, suite completa, documentazione, prompt log e pull request, il team si ferma senza iniziare la Fase 4.
 
 ### Fase 4: sensibilità del prezzo e analisi del mese
 
