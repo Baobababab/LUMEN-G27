@@ -6,7 +6,7 @@ import pandas as pd
 
 
 _DATA_DIR = Path(__file__).resolve().parent / "data"
-_PII_COLUMNS = ("first_name", "last_name", "email")
+_PII_COLUMNS = ("respondent_id", "first_name", "last_name", "email")
 _ANOMALY_WEEK = "2025-07-28"
 _ANOMALY_FLAG_COLUMN = "anomaly_flag"
 _report: dict[str, Any] | None = None

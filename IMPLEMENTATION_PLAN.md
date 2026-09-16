@@ -113,7 +113,7 @@ Il ranking privilegerà, nell'ordine, un verdetto migliore, un numero minore di 
 
 `data/customer_survey.csv` proviene senza modifiche dal template universitario pubblico `ateliaworkshop-ai/lumen-pricing-case-template`. Il repository conserverà il file e la sua cronologia.
 
-Il runtime non deve caricare `first_name`, `last_name`, `email` o `respondent_id`. Il codice corrente esclude i primi tre campi ma carica ancora `respondent_id`; l'implementazione dovrà chiudere questa lacuna prima del rilascio delle nuove funzioni.
+Il runtime non deve caricare `first_name`, `last_name`, `email` o `respondent_id`. Prima della Fase 0 il codice escludeva i primi tre campi e caricava ancora `respondent_id`; la Fase 0 chiude questa lacuna prima delle nuove funzioni.
 
 Ogni fase dovrà rispettare queste condizioni:
 
@@ -179,6 +179,15 @@ Un test basato soltanto sui nomi delle chiavi può ignorare valori filtrati male
 **Condizione di arresto**
 
 La fase termina dopo test mirati, suite completa, aggiornamenti documentali, prompt log e pull request dedicata. Il team si ferma dopo l'apertura della pull request e non avvia spiegazioni, pannelli o altre funzioni.
+
+**Risultato della Fase 0, 2026-09-16**
+
+- il runtime esclude `respondent_id`, `first_name`, `last_name` ed `email`;
+- FastAPI restituisce un errore 422 senza riecheggiare input non valido;
+- i test usano sentinelle sintetiche e verificano l'assenza di chiavi e valori proibiti;
+- le route di file e righe grezze provate dai test restituiscono 404;
+- README documenta origine del CSV e trattamento dei quattro identificativi;
+- 5 test mirati e 11 test completi passano localmente con Python 3.11; il CI Python 3.12 resta gate ufficiale.
 
 ### Fase 1: spiegazioni, metodologia e testi manageriali
 
