@@ -1,807 +1,193 @@
-# Piano operativo ufficiale per LUMEN
+# Official LUMEN implementation plan
 
-## Stato del documento
+## Purpose and verified baseline
 
-Questo documento definisce il lavoro approvabile per la prossima fase del progetto. Il team non deve implementare le funzioni descritte qui finché il piano non riceve approvazione.
+This plan records approved work and completed implementation evidence for the LUMEN prototype.
+Planning began from a static frontend in \`public/\`, FastAPI in \`api/index.py\`, and calculations
+in Python modules. The original verified baseline was \`main\` at
+\`b40838303222bed86942a7ed6e6091507ecc55dc\`, with a successful Production deployment and nine
+local Python 3.11 tests. GitHub Actions on Python 3.12 remains the official gate.
 
-Branch di pianificazione: `codex/implementation-plan-e262998`.
+The objective is a clear decision tool for a non-technical manager choosing price, position,
+launch channel, and launch month for Germany. It presents the CMO and CFO trade-off while producing
+one verdict only: \`GO\`, \`CONDITIONAL\`, or \`NO-GO\`. Changes to verdict rules require documented
+rationale, focused tests, and approval.
 
-Baseline verificata:
+## Architecture and information contract
 
-- architettura: frontend statico in `public/`, API FastAPI in `api/index.py`, calcoli nei moduli Python;
-- branch di partenza: `main` al commit `b40838303222bed86942a7ed6e6091507ecc55dc`;
-- deployment verificato: ambiente Production, stato `success`, stesso commit, URL `https://lumen-g27-8lpm8wqtu-lumen-g27.vercel.app`;
-- test locali: 9 test superati con Python 3.11;
-- verifica ufficiale: GitHub Actions con Python 3.12;
-- limite funzionale principale: manca il pannello esplicito CMO contro CFO previsto come M3.
-
-## Obiettivo
-
-Trasformare l'attuale calcolatore in uno strumento aziendale comprensibile, verificabile e utilizzabile da un manager non tecnico. L'app deve aiutare a scegliere prezzo, posizionamento, canale iniziale e momento del lancio, mostrando il compromesso tra gli obiettivi del CMO e quelli del CFO.
-
-Il risultato centrale resta un solo verdetto: `GO`, `CONDITIONAL` oppure `NO-GO`. Il team conserverà le regole correnti del verdetto finché una modifica non riceve una motivazione documentata, test dedicati e approvazione.
-
-## Vincoli architetturali
-
-Il team manterrà questa separazione:
-
-| Livello | Responsabilità |
+| Layer | Responsibility |
 | --- | --- |
-| `public/index.html` | struttura accessibile della pagina e controlli utente |
-| `public/styles.css` | presentazione, stati visivi, layout responsive e stampa |
-| `public/app.js` | stato temporaneo della sessione, chiamate API e rendering |
-| `api/index.py` | validazione delle richieste e serializzazione di risultati aggregati |
-| moduli Python esistenti | formule, regole decisionali e accesso ai dati approvati |
-| nuovo modulo Python dedicato, se necessario | posizionamento, sensibilità, timing e alternative calcolate |
+| \`public/index.html\` | Accessible page structure and controls |
+| \`public/styles.css\` | Presentation, responsive layout, visual states, and print |
+| \`public/app.js\` | Temporary browser state, API calls, and rendering |
+| \`api/index.py\` | Request validation and aggregated-response serialization |
+| Python modules | Approved formulas, decision rules, and data access |
 
-Il JavaScript non conterrà formule economiche, soglie decisionali, classificazioni competitive o logica per migliorare uno scenario. Il browser potrà conservare fino a tre scenari soltanto per la durata della pagina aperta.
+JavaScript contains no economic formulas, decision thresholds, competitive classifications, or
+scenario-improvement logic. The browser retains up to three scenarios only while the page remains
+open. Public endpoints return aggregated results only and never serve CSV files, survey rows, or
+identifiers.
 
-L'API continuerà a restituire risultati aggregati. Nessun endpoint servirà file CSV, righe del questionario o identificativi.
+Visible application text uses clear business English for non-technical managers. The application
+is not bilingual. Each metric includes name, value, unit, visual status, approved threshold
+comparison where available, business explanation, and expandable formula, source, assumptions,
+and limits.
 
-Tutti i testi visibili nell'app useranno un inglese aziendale semplice, adatto a un manager non tecnico. L'interfaccia non sarà bilingue. La documentazione interna, compreso questo piano, può restare in italiano.
+Verdict thresholds are LTV:CAC of 3.0, the user-selected payback horizon, and a 35% price
+acceptability index.
 
-## Contratto informativo comune
+- \`critical\`: the metric fails its approved threshold;
+- \`monitor\`: the metric passes but decides the verdict, or has no approved threshold;
+- \`favorable\`: the metric passes and does not decide the verdict.
 
-Ogni metrica mostrata nell'interfaccia avrà questi campi:
+Metrics without an approved threshold display \`Monitor\` and \`No approved decision threshold\`.
+Expandable controls have explicit labels, work with keyboard and screen readers, and support global
+open and close actions.
 
-- nome completo e acronimo, quando esiste;
-- valore e unità di misura;
-- stato `favorevole`, `da monitorare` oppure `critico`;
-- soglia e confronto, se il modello possiede una soglia approvata;
-- spiegazione in linguaggio aziendale;
-- dettaglio espandibile con formula, fonte, assunzioni e limiti.
+## Analysis contracts
 
-Le tre metriche che guidano il verdetto useranno le soglie esistenti: LTV:CAC 3,0, payback scelto dall'utente e indice di accettabilità 35%. Lo stato visivo non cambierà il verdetto:
+### Competitive position and CMO/CFO perspectives
 
-- `critico`: la metrica non supera la propria soglia;
-- `da monitorare`: la metrica supera la soglia ma costituisce il fattore decisivo del verdetto, oppure non possiede una soglia ufficiale;
-- `favorevole`: la metrica supera la soglia e non costituisce il fattore decisivo.
+The backend compares selected price with observations in
+\`competitor_prices_by_channel.csv\` for the same channel and comparable format. It returns the
+competitor name, recorded positioning, observed range, and distance from LUMEN price. Affordable,
+premium, and highly premium are management labels derived from supplied observations, not general
+market claims. The tool states any overlap and never estimates a missing competitor price.
 
-Per una metrica senza soglia, l'interfaccia mostrerà `da monitorare` insieme alla frase "Nessuna soglia decisionale approvata". Il team non inventerà soglie per ottenere un colore favorevole o critico.
+The CMO perspective uses price acceptability, observed competitor price position, and consistency
+with the premium objective in the brief. The CFO perspective uses unit and monthly contribution,
+LTV:CAC, payback, and threshold performance. No metric is added without an approved formula,
+source, and meaning. Both panels describe the same selected scenario and verdict, including the
+decision driver, main risk, and accepted trade-off.
 
-Ogni controllo espandibile userà un'etichetta esplicita, per esempio "Come è stato calcolato?", e funzionerà con tastiera e lettore di schermo. Un comando globale permetterà di espandere o chiudere tutte le spiegazioni.
+### Scenario, channel, sensitivity, and month analysis
 
-## Contratti delle nuove analisi
+The page starts with one scenario and supports up to three. Users can duplicate, edit, and remove
+scenarios. The backend returns full results and aggregated differences for at most three valid
+scenarios. \`Compare channels\` creates all official channels with unchanged price, month, and
+horizon. The frontend does not calculate economic differences.
 
-### Posizionamento competitivo
+Price sensitivity uses discrete prices within \`OBSERVED_PRICE_SUPPORT\`. It does not use binary
+search because acceptability is non-monotonic below EUR 2.10. The selected price is always
+evaluated. The service groups consecutive prices with the same verdict and returns the selected
+interval plus nearest verdict changes. Each request has a 250-evaluation limit and runs only for
+the selected baseline.
 
-Il backend confronterà il prezzo scelto con le osservazioni di `competitor_prices_by_channel.csv` per lo stesso canale e per il formato confrontabile, quando disponibile. La risposta conserverà nome del concorrente, posizionamento dichiarato nel CSV, fascia osservata e distanza dal prezzo LUMEN.
+The selected step is the most precise one that meets the measured latency budget. The application
+reports the actual step, evaluation count, method, and latency, and calls the output model
+sensitivity rather than a demand forecast.
 
-Le parole "accessibile", "premium" e "molto premium" saranno etichette manageriali derivate dalle fasce e dai posizionamenti presenti nel file, non affermazioni generali sul mercato tedesco. In caso di sovrapposizione tra fasce, l'app dichiarerà la sovrapposizione. Se il CSV non contiene un concorrente per il canale scelto, l'app non ne stimerà il prezzo.
+Launch-month analysis keeps price, channel, and horizon fixed. It uses only
+\`seasonality_and_weather.csv\` and returns the selected month index, its rank, contribution and
+payback change, and the most favorable supplied-data window. It does not call a weather service.
 
-### Prospettive CMO e CFO
+### Model adjustments
 
-Il pannello CMO userà soltanto l'indice di accettabilità del prezzo, la posizione rispetto alle fasce osservate dei concorrenti e la coerenza con l'obiettivo premium descritto nel brief. Il pannello CFO userà contributo unitario e mensile, LTV:CAC, payback e superamento delle soglie.
+For \`CONDITIONAL\` and \`NO-GO\` outcomes, the backend evaluates one changed variable at a time:
+supported price, another official channel, or another month. Ranking favors a better verdict, fewer
+failed thresholds, then shorter normalized distance from thresholds, with deterministic tie-breaks.
+The interface labels results as model adjustments. It does not create arbitrary advice or a
+multi-objective optimizer. A \`GO\` baseline explicitly states that no adjustment is needed.
 
-Il team non introdurrà una metrica nel pannello CMO o altrove senza formula, fonte e significato approvati e documentati.
+## Privacy and security
 
-Entrambi i pannelli commenteranno lo stesso scenario e lo stesso verdetto. Sotto il verdetto generale l'app mostrerà fattore decisivo, rischio principale e compromesso accettato.
+\`data/customer_survey.csv\` is unchanged from the public university template
+\`ateliaworkshop-ai/lumen-pricing-case-template\`. Runtime processing excludes \`respondent_id\`,
+\`first_name\`, \`last_name\`, and \`email\`.
 
-### Confronto di scenari e canali
+The implementation must retain:
 
-L'app partirà con un solo scenario. L'utente potrà aggiungerne un secondo e un terzo, duplicare uno scenario, modificarlo e rimuoverlo. Il limite resterà tre.
+- no identifiers in frontend, API responses, or application logs;
+- no endpoint for CSV files or raw rows;
+- no transfer to external services;
+- aggregated results only;
+- safe API errors that reveal no individual row or personal value.
 
-Il backend accetterà una richiesta di confronto con un massimo di tre scenari validi e restituirà risultati completi e differenze aggregate. Il comando "Confronta i canali" costruirà tre scenari con prezzo, mese e orizzonte uguali e con i tre canali ufficiali. Il frontend non ricalcolerà differenze economiche.
+Tests use only suite-created synthetic fixtures and sentinels. They never copy personal values from
+the supplied CSV. Privacy tests verify absent forbidden keys and sentinels, aggregated
+\`/api/scenario\` and \`/api/compare\` responses, safe 404-style raw-data failures, and aggregated
+data-quality output.
 
-### Sensibilità del prezzo
+## Build order and completed phases
 
-Il backend valuterà punti discreti dentro `OBSERVED_PRICE_SUPPORT`. Non userà ricerca binaria, perché l'accettabilità non è monotona sotto EUR 2,10.
+The implementation order was:
 
-L'algoritmo dividerà i punti consecutivi in intervalli con lo stesso verdetto e restituirà l'intervallo contiguo che contiene il prezzo selezionato, oltre ai cambi di verdetto più vicini. Il prezzo scelto sarà valutato sempre, anche quando non coincide con la griglia.
+\`Phase 0 → Phase 1 → Phase 2 → Phase 3 → Addendum 3A → Phase 4 → Phase 5 → Addendum 5A →
+Addendum 5B → Addendum 5C → Phase 6 → Phase 7\`.
 
-Prima di fissare il passo della griglia, il team misurerà la latenza con passi di EUR 0,01, EUR 0,02 e EUR 0,05. Ogni richiesta di sensibilità avrà un limite esplicito di 250 valutazioni di prezzo. Il confronto di più scenari calcolerà la sensibilità su richiesta per un solo scenario selezionato, così una richiesta non supera il limite.
+Each phase began from updated \`main\` after the preceding merge.
 
-Il team adotterà il passo più preciso che rispetta il budget misurato. Se EUR 0,01 supera il budget, userà il passo successivo che lo rispetta e ne spiegherà il limite. Documenterà passo, numero di valutazioni, metodo di misura e latenza. La precisione dichiarata nell'interfaccia coinciderà con il passo usato. L'interfaccia chiamerà il risultato "sensibilità del modello", non previsione della domanda.
+### Phase 0: privacy baseline
 
-### Momento del lancio
+Runtime exclusion of all four identifiers, safe 422 validation, 404 raw-data routes, synthetic
+sentinel tests, and immediate README Data documentation were implemented on 2026-09-16. Five
+focused and eleven full tests passed locally.
 
-Il backend restituirà l'indice stagionale del mese scelto, la sua posizione tra i dodici mesi, la variazione del contributo mensile e del payback e la finestra più favorevole nei dati disponibili.
+### Phase 1: explanations and manager text
 
-Il confronto terrà fissi prezzo, canale e orizzonte. Il risultato userà soltanto `seasonality_and_weather.csv`; l'app non chiamerà servizi meteorologici.
+The API now provides aggregated metadata for six metrics: status, comparison, explanation,
+formula, source, assumptions, and limits. The frontend renders accessible details and global
+open/close controls. Plain business English and no browser business calculations were documented.
 
-### Percorso per migliorare lo scenario
+### Phase 2: competitive position and CMO/CFO panels
 
-Per un risultato `CONDITIONAL` o `NO-GO`, il backend cercherà alternative modificando una variabile alla volta:
+The API compares price with observed competitors in the same channel and format. CMO and CFO panels
+reuse the selected scenario and its single verdict. No competitor, threshold, or additional verdict
+was invented.
 
-- prezzo entro il supporto osservato;
-- uno degli altri canali ufficiali;
-- uno degli altri undici mesi.
+### Phase 3 and Addendum 3A: scenario comparison and selected baseline
 
-Il ranking privilegerà, nell'ordine, un verdetto migliore, un numero minore di soglie fallite e una minore distanza normalizzata dalle soglie. I criteri di spareggio saranno deterministici e testati. L'app distinguerà ogni alternativa come aggiustamento supportato dal modello. Se nessuna modifica singola migliora il risultato, lo dichiarerà senza generare suggerimenti arbitrari.
+\`/api/compare\` accepts one to three scenarios, calculates results and aggregated differences in
+the backend, and supports the official channel comparison. Browser state is temporary. The selected
+baseline drives detailed panels and all relative differences.
 
-## Privacy e sicurezza
+### Phase 4: price sensitivity and month analysis
 
-`data/customer_survey.csv` proviene senza modifiche dal template universitario pubblico `ateliaworkshop-ai/lumen-pricing-case-template`. Il repository conserverà il file e la sua cronologia.
+Optional analysis runs for one selected baseline only. Sensitivity uses EUR 0.02 resolution,
+observed endpoints EUR 0.62 and EUR 3.09, plus the selected price, for no more than 126 effective
+evaluations under the hard 250 limit. Warmed-cache benchmarks on Python 3.11 measured 3.901 ms at
+EUR 0.01, 1.892 ms at EUR 0.02, and 768 ms at EUR 0.05; EUR 0.02 met the 2,500 ms budget.
+Month analysis uses supplied seasonal indices only.
 
-Il runtime non deve caricare `first_name`, `last_name`, `email` o `respondent_id`. Prima della Fase 0 il codice escludeva i primi tre campi e caricava ancora `respondent_id`; la Fase 0 chiude questa lacuna prima delle nuove funzioni.
+### Phase 5 and addenda: model adjustments
 
-Ogni fase dovrà rispettare queste condizioni:
+For \`CONDITIONAL\` and \`NO-GO\`, the backend evaluates supported price changes, alternative
+official channels, and alternative months, one variable at a time. The interface shows at most
+three manager-readable adjustments at the end of the results. It also displays a clear no-change
+message for \`GO\`.
 
-- nessun identificativo nel frontend, nelle risposte API o nei log applicativi;
-- nessun endpoint per CSV o righe grezze;
-- nessun invio a servizi esterni;
-- risultati aggregati;
-- errori API privi di dettagli che rivelino righe o valori personali.
+### Phase 6: print mode
 
-La documentazione specificherà la provenienza del CSV, la scelta di non usare gli identificativi e la necessità che il proprietario del caso confermi la natura sintetica o autorizzata dei dati. Questa conferma non bloccherà l'implementazione basata sul template fornito.
+\`Print evaluation\` uses the native browser dialog. The print record includes evaluated inputs,
+recommendation, trade-off, perspectives, metrics, sources, timestamp, and page URL. Print CSS
+hides controls and Data quality. No PDF library, server-side generator, email, or archive was added.
 
-I test useranno soltanto fixture e sentinelle sintetiche create per la suite. Nessun test copierà nomi, email, identificativi o altri valori personali presenti nel CSV del template.
+### Phase 7: final verification
 
-Il test di non esposizione controllerà almeno:
+README now completes the university checklist and states the stable Vercel domain. PROJECT_CONTEXT
+records delivered privacy boundaries, browser/Python responsibilities, and native printing.
+Privacy/API checks passed 13 tests; the full suite passed 33 tests; \`python -m compileall .\`
+passed. PR #55 merged. Production succeeded on \`894c5de\`, and the public-site smoke test passed.
 
-- assenza delle chiavi `first_name`, `last_name`, `email` e `respondent_id` da `load_all()["customer_survey"]` e dalle risposte API;
-- assenza nelle risposte API di ogni valore sentinella sintetico inserito nelle fixture;
-- presenza di soli dati aggregati nelle risposte di `/api/scenario` e `/api/compare`;
-- risposta HTTP 404, o equivalente sicuro, per tentativi di ottenere file CSV e righe grezze;
-- presenza di soli dati aggregati nel pannello qualità dati.
+## Mandatory phase stop protocol
 
-## Ordine di costruzione
+After each phase:
 
-Le fasi dipendono l'una dall'altra in questo ordine: `Fase 0 → Fase 1 → Fase 2 → Fase 3 → Postilla 3A → Fase 4 → Fase 5 → Postilla 5A → Postilla 5B → Postilla 5C → Fase 6 → Fase 7`. Ogni fase parte da `main` aggiornata dopo il merge della fase precedente. Il team non prepara in parallelo codice destinato a una fase successiva.
+1. run focused tests;
+2. run the complete suite;
+3. update this plan;
+4. update affected documentation and relevant README checklist answers;
+5. include the prompt log;
+6. verify no browser business logic and no non-aggregated API data;
+7. open a pull request and wait for GitHub Actions on Python 3.12;
+8. stop before the next phase.
 
-### Fase 0: privacy baseline, prima delle funzioni
+## Translation follow-up
 
-**File probabilmente coinvolti**
+This separate task translates repository-authored Italian documentation into English while preserving
+technical meaning and data. It does not translate CSV values, supplied PDF material, or verbatim
+prompt logs.
 
-- `data_loader.py`
-- `api/index.py`
-- `test_data_loader.py`
-- `test_api.py`
-- `README.md`
-- `IMPLEMENTATION_PLAN.md`
-- prompt log della fase
-
-**Comportamento atteso**
-
-Il runtime esclude `respondent_id`, `first_name`, `last_name` ed `email` durante la lettura del questionario. Le API continuano a restituire risultati aggregati e rifiutano richieste di file CSV o righe grezze. La risposta alla voce Data della checklist del README documenta subito la provenienza dal template e la scelta di non usare identificativi.
-
-**Criteri di accettazione**
-
-- `load_all()["customer_survey"]` non contiene le quattro chiavi proibite;
-- `/api/scenario` e gli endpoint disponibili non contengono chiavi proibite o sentinelle sintetiche;
-- le risposte API contengono soltanto dati aggregati;
-- i tentativi di ottenere un CSV o una riga grezza ricevono HTTP 404 o una risposta sicura equivalente;
-- i test usano fixture e sentinelle sintetiche e non copiano valori personali dal CSV;
-- README risponde alla voce Data prima dell'avvio della Fase 1.
-
-**Test necessari**
-
-- test unitario del filtro delle quattro colonne con DataFrame sintetico;
-- test API con sentinelle sintetiche per chiavi e valori;
-- test delle route inesistenti per file CSV, dataset e singole righe;
-- test dello schema aggregato della risposta;
-- controllo documentale della voce Data del README.
-
-**Rischi**
-
-Un test basato soltanto sui nomi delle chiavi può ignorare valori filtrati male. Le sentinelle sintetiche permetteranno di verificare sia lo schema sia il contenuto senza usare dati personali del template.
-
-**Condizione di arresto**
-
-La fase termina dopo test mirati, suite completa, aggiornamenti documentali, prompt log e pull request dedicata. Il team si ferma dopo l'apertura della pull request e non avvia spiegazioni, pannelli o altre funzioni.
-
-**Risultato della Fase 0, 2026-09-16**
-
-- il runtime esclude `respondent_id`, `first_name`, `last_name` ed `email`;
-- FastAPI restituisce un errore 422 senza riecheggiare input non valido;
-- i test usano sentinelle sintetiche e verificano l'assenza di chiavi e valori proibiti;
-- le route di file e righe grezze provate dai test restituiscono 404;
-- `httpx` è dichiarato nelle dipendenze per eseguire gli stessi test HTTP in locale e nel CI Python 3.12;
-- README documenta origine del CSV e trattamento dei quattro identificativi;
-- 5 test mirati e 11 test completi passano localmente con Python 3.11; il CI Python 3.12 resta gate ufficiale.
-
-### Fase 1: spiegazioni, metodologia e testi manageriali
-
-**File probabilmente coinvolti**
-
-- `api/index.py`
-- `public/index.html`
-- `public/app.js`
-- `public/styles.css`
-- `constants.py`
-- `test_api.py`
-- `README.md`, per le risposte pertinenti alla checklist
-- `IMPLEMENTATION_PLAN.md`
-- prompt log della fase
-
-**Comportamento atteso**
-
-L'API aggiunge metadati aggregati per nome, unità, stato, soglia, spiegazione, formula, fonte, assunzioni e limiti. L'interfaccia presenta una vista sintetica e dettagli espandibili. Il comando globale apre o chiude tutte le sezioni metodologiche.
-
-**Criteri di accettazione**
-
-- nessun acronimo compare senza nome completo alla prima occorrenza;
-- ogni metrica rispetta il contratto informativo comune;
-- i dettagli funzionano con mouse, tastiera e tecnologie assistive;
-- i testi spiegano il significato aziendale senza cambiare le formule;
-- le soglie mostrate coincidono con quelle usate da `verdict.py`.
-
-**Test necessari**
-
-- test API sullo schema dei metadati;
-- test sui tre stati e sul caso senza soglia ufficiale;
-- test manuale da tastiera per apertura singola e globale;
-- controllo responsive su viewport mobile e desktop.
-
-**Rischi**
-
-Una risposta API troppo verbosa può duplicare contenuti statici. Il team centralizzerà definizioni e fonti in Python o in una struttura condivisa, senza copiarle tra endpoint.
-
-**Condizione di arresto**
-
-La fase termina quando l'attuale scenario singolo dispone di spiegazioni complete. Il team non introduce grafici, nuove metriche o modifiche al verdetto.
-
-**Risultato della Fase 1, 2026-09-16**
-
-- API restituisce metadati aggregati per sei metriche, con stato, confronto, spiegazione, formula, fonte, assunzioni e limiti;
-- frontend usa questi metadati per dettagli accessibili e controlli globali di apertura e chiusura;
-- testi dell'app restano in inglese aziendale semplice;
-- README documenta l'esplicabilità e l'assenza di calcoli nel browser;
-- 4 test API, 12 test completi e il controllo sintattico JavaScript passano localmente con Python 3.11; CI Python 3.12 resta gate ufficiale.
-
-### Fase 2: posizionamento competitivo e pannello CMO/CFO
-
-**File probabilmente coinvolti**
-
-- nuovo `decision_support.py`, se la logica renderebbe `api/index.py` troppo esteso;
-- `data_loader.py`
-- `api/index.py`
-- `public/index.html`
-- `public/app.js`
-- `public/styles.css`
-- nuovo `test_decision_support.py`
-- `test_api.py`
-- `README.md`, per le risposte pertinenti alla checklist
-- `IMPLEMENTATION_PLAN.md`
-- prompt log della fase
-
-**Comportamento atteso**
-
-L'app colloca il prezzo nella fascia osservata per il canale e mostra le due prospettive CMO e CFO sotto un unico verdetto. Il riepilogo nomina fattore decisivo, rischio e compromesso.
-
-**Criteri di accettazione**
-
-- concorrenti, prezzi e posizionamenti provengono dal CSV;
-- l'app segnala fasce sovrapposte o osservazioni mancanti;
-- CMO e CFO non producono verdetti separati;
-- il pannello riusa metriche già calcolate;
-- il verdetto resta identico a quello restituito oggi per gli stessi input.
-
-**Test necessari**
-
-- test per ciascun canale e per dati concorrente mancanti;
-- test sui confini e sulle sovrapposizioni delle fasce;
-- test di regressione delle regole `GO`, `CONDITIONAL` e `NO-GO`;
-- test API che verifica un solo verdetto.
-
-**Rischi**
-
-Le etichette accessibile, premium e molto premium possono sembrare dati di mercato. La risposta dovrà collegarle alle fasce osservate e mostrare la fonte.
-
-**Condizione di arresto**
-
-La fase termina con il pannello M3 funzionante. Il team non aggiunge mappe di brand, competitor esterni o punteggi di percezione inventati.
-
-**Risultato della Fase 2, 2026-09-16**
-
-- API confronta il prezzo selezionato con i concorrenti osservati nello stesso canale e formato;
-- pannelli CMO e CFO riusano lo stesso scenario e lo stesso verdetto;
-- nessun concorrente, soglia o verdetto aggiuntivo viene inventato;
-- 4 test API, 12 test completi e controllo sintattico JavaScript passano localmente con Python 3.11; CI Python 3.12 resta gate ufficiale.
-
-### Fase 3: confronto di massimo tre scenari e confronto canali
-
-**File probabilmente coinvolti**
-
-- `api/index.py`
-- eventuale `decision_support.py`
-- `public/index.html`
-- `public/app.js`
-- `public/styles.css`
-- `test_api.py`
-- eventuale `test_decision_support.py`
-- `README.md`, per le risposte pertinenti alla checklist
-- `IMPLEMENTATION_PLAN.md`
-- prompt log della fase
-
-**Comportamento atteso**
-
-L'utente gestisce da uno a tre scenari, può duplicarli e confrontarli. Il comando "Confronta i canali" prepara i tre canali ufficiali con gli altri input invariati. Il browser conserva lo stato soltanto finché la pagina resta aperta.
-
-**Criteri di accettazione**
-
-- il flusso con un solo scenario resta quello predefinito;
-- il quarto scenario viene rifiutato nell'interfaccia e dall'API;
-- la duplicazione copia tutti gli input e crea un elemento modificabile indipendente;
-- la rimozione non può lasciare zero scenari;
-- differenze e verdetti provengono dal backend;
-- refresh e chiusura della pagina eliminano lo stato.
-
-**Test necessari**
-
-- test API con uno, due, tre e quattro scenari;
-- test per input non validi in uno degli scenari;
-- test sulle differenze aggregate;
-- test manuali di aggiunta, duplicazione, modifica e rimozione;
-- test del comando per i tre canali.
-
-**Rischi**
-
-Tre schede complete possono rendere la pagina illeggibile su mobile. Il confronto userà un riepilogo compatto e permetterà di aprire i dettagli di ciascuno scenario.
-
-**Condizione di arresto**
-
-La fase termina al confronto in memoria di tre scenari. Il team non aggiunge account, URL condivisibili, database, cronologia o esportazione dati.
-
-**Risultato della Fase 3, 2026-09-16**
-
-- `/api/compare` accetta da uno a tre scenari e restituisce risultati e differenze aggregate calcolati dal backend;
-- l'interfaccia parte con un solo scenario, ne può duplicare fino a tre, modificare o rimuovere le copie e blocca il quarto;
-- il comando "Compare channels" genera i tre canali ufficiali mantenendo invariati prezzo, mese e orizzonte;
-- lo stato rimane solo nel browser fino a refresh o chiusura; nessun account, database, cronologia o esportazione è stato aggiunto;
-- la checklist README documenta ora la scelta di storage temporaneo.
-
-### Postilla 3A: scenario selezionato come baseline del confronto
-
-Questa postilla completa il confronto prima della Fase 4. Lo Scenario 1 resta selezionato per impostazione predefinita, ma l'utente può scegliere uno qualunque degli scenari presenti come baseline. Il verdetto, le metriche, il posizionamento competitivo e i pannelli CMO/CFO mostrano sempre lo scenario selezionato. Gli altri scenari mostrano differenze rispetto a quella baseline.
-
-**Interazione e presentazione**
-
-- ogni scheda scenario offre un controllo esplicito in inglese, per esempio `Use as baseline`;
-- la scheda selezionata mantiene fondo bianco, bordo più evidente e indicazione testuale `Selected baseline`;
-- le schede non selezionate usano fondo grigio chiaro e testo secondario più tenue, ma conservano contrasto leggibile;
-- colore e contrasto non sono l'unico segnale: stato selezionato, controllo e testo devono essere percepibili anche da tastiera e tecnologie assistive;
-- il riepilogo del confronto conserva l'ordine Scenario 1, 2 e 3 e identifica chiaramente la baseline;
-- quando cambia la selezione dopo una valutazione, il frontend invia una nuova richiesta con gli input correnti. Non ricalcola differenze economiche nel browser.
-
-**Contratto API**
-
-`/api/compare` accetta `baseline_index` insieme agli scenari, con valore predefinito `0`. Il backend verifica che l'indice appartenga alla lista ricevuta, calcola tutte le differenze rispetto allo scenario selezionato e restituisce `baseline_index` nella risposta. Lo scenario baseline ha differenze pari a zero. L'ordine degli scenari non cambia.
-
-**File probabilmente coinvolti**
-
-- `api/index.py`
-- `public/index.html`
-- `public/app.js`
-- `public/styles.css`
-- `test_api.py`
-- `test_public_app.py`
-- `README.md`, se la checklist richiede un chiarimento sull'interazione
-- `IMPLEMENTATION_PLAN.md`
-- prompt log della postilla
-
-**Criteri di accettazione**
-
-- con uno scenario, quello scenario è sempre la baseline;
-- con due o tre scenari, l'utente può selezionare qualsiasi scenario senza cambiarne l'ordine;
-- pannelli dettagliati e verdetto appartengono allo scenario selezionato;
-- ogni differenza restituita usa lo scenario selezionato come riferimento;
-- rimuovendo la baseline, l'interfaccia seleziona il primo scenario rimasto;
-- aggiungere o duplicare uno scenario non cambia la baseline esistente;
-- selezione e stato visivo funzionano da tastiera e non dipendono soltanto dal colore;
-- il browser non contiene formule economiche e non conserva lo stato dopo refresh o chiusura.
-
-**Test necessari**
-
-- test API con `baseline_index` uguale a 0, 1 e 2;
-- test API per indice negativo o fuori dalla lista ricevuta;
-- test che verifica differenze zero per la baseline e differenze corrette per gli altri scenari;
-- test di regressione privacy sulla nuova risposta aggregata;
-- smoke test browser per selezione, aggiornamento pannelli e rimozione della baseline;
-- controllo tastiera, contrasto e viewport mobile.
-
-**Rischi e limiti**
-
-Un'intera scheda cliccabile può cambiare baseline mentre l'utente modifica un input. La selezione userà quindi un controllo esplicito. Il grigio non userà opacità sull'intera scheda, perché ridurrebbe anche la leggibilità dei campi. La postilla non aggiunge metriche, persistenza, confronto automatico continuo o nuove regole decisionali.
-
-**Condizione di arresto**
-
-La postilla termina quando uno dei tre scenari può guidare sia i pannelli dettagliati sia le differenze backend. Dopo test mirati, suite completa, documentazione, prompt log e pull request, il team si ferma senza iniziare la Fase 4.
-
-**Risultato della Postilla 3A, 2026-09-16**
-
-- `/api/compare` accetta e restituisce `baseline_index`; le differenze restano calcolate dal backend;
-- ogni scenario offre `Use as baseline`; pannelli dettagliati e differenze seguono la baseline selezionata;
-- baseline selezionata ha fondo bianco e indicazione testuale; le altre schede usano grigio chiaro senza ridurre la leggibilità;
-- rimuovere la baseline seleziona il primo scenario rimasto; aggiungere o duplicare conserva la baseline;
-- test API, test regressione frontend e smoke test Chrome verificano selezione e richiesta della baseline.
-
-### Fase 4: sensibilità del prezzo e analisi del mese
-
-**File probabilmente coinvolti**
-
-- `acceptance.py`
-- `economics.py`
-- `verdict.py`, soltanto come dipendenza da riusare;
-- `data_loader.py`
-- eventuale `decision_support.py`
-- `api/index.py`
-- `public/index.html`
-- `public/app.js`
-- `public/styles.css`
-- `test_acceptance.py`
-- `test_economics.py`
-- `test_verdict.py`
-- eventuale `test_decision_support.py`
-- `test_api.py`
-- `README.md`, per le risposte pertinenti alla checklist
-- `IMPLEMENTATION_PLAN.md`
-- prompt log della fase
-
-**Comportamento atteso**
-
-L'app mostra l'intervallo contiguo di prezzo che conserva il verdetto, i cambi più vicini e il confronto del mese scelto con gli altri mesi. Il backend misura più granularità prima di fissare il passo della scansione.
-
-**Criteri di accettazione**
-
-- nessun punto esce da `OBSERVED_PRICE_SUPPORT`;
-- nessuna richiesta supera 250 valutazioni di prezzo;
-- l'algoritmo trova intervalli non monotoni e disgiunti;
-- il risultato distingue risoluzione della griglia e precisione economica;
-- la precisione dichiarata nell'interfaccia coincide con il passo della griglia;
-- mese, rango stagionale, contributo e payback risultano coerenti;
-- il frontend non contiene formule;
-- passo, numero di valutazioni, latenza misurata e budget vengono documentati.
-
-**Test necessari**
-
-- test sintetico con verdetti non monotoni;
-- test ai limiti EUR 0,62 ed EUR 3,09;
-- test con prezzo fuori griglia;
-- test del limite di 250 valutazioni;
-- test per i dodici mesi e per parità stagionali;
-- benchmark ripetibile dei tre passi candidati;
-- test API dello schema e dei limiti.
-
-**Rischi**
-
-Una griglia fine può rallentare una funzione Vercel. Il team userà caching dei dati già disponibile e sceglierà il passo dopo il benchmark, senza introdurre una ricerca basata su monotonicità.
-
-**Condizione di arresto**
-
-La fase termina con una risposta entro il budget misurato e una spiegazione dei limiti. Il team non aggiunge forecast, simulazioni Monte Carlo, meteo live o causalità stagionale.
-
-**Risultato della Fase 4, 2026-09-16**
-
-- `/api/compare` calcola l'analisi opzionale per una sola baseline selezionata, mai per tutti gli scenari; la risposta resta aggregata;
-- la sensibilità valuta griglia EUR 0,02, estremi EUR 0,62 e EUR 3,09 e prezzo selezionato, con massimo effettivo di 126 valutazioni sotto limite rigido 250;
-- il backend raggruppa intervalli contigui di identico verdetto e restituisce solo i due cambi più vicini; non assume monotonicità dell'accettabilità;
-- benchmark locale ripetuto con cache dati calda, Python 3.11, DTC Online, luglio e orizzonte 12 mesi: mediana EUR 0,01 = 3.901 ms (248 punti), EUR 0,02 = 1.892 ms (125), EUR 0,05 = 768 ms (51); budget 2.500 ms, quindi passo EUR 0,02;
-- l'interfaccia dichiara EUR 0,02 come risoluzione di griglia, non precisione economica, e chiama il risultato sensibilità del modello;
-- l'analisi del mese usa soltanto gli indici di `seasonality_and_weather.csv`, restituisce rango sui dodici mesi, finestra migliore anche a parità, contributo e payback a parità di prezzo, canale e orizzonte;
-- test sintetici coprono verdetti non monotoni, estremi, prezzo fuori griglia, limite, dodici mesi e parità; test API e frontend verificano il contratto aggregato e l'assenza di formule JavaScript.
-
-### Fase 5: percorso per migliorare lo scenario
-
-**File probabilmente coinvolti**
-
-- eventuale `decision_support.py`
-- `verdict.py`, come regola da riusare;
-- `api/index.py`
-- `public/index.html`
-- `public/app.js`
-- `public/styles.css`
-- eventuale `test_decision_support.py`
-- `test_api.py`
-- `README.md`, per le risposte pertinenti alla checklist
-- `IMPLEMENTATION_PLAN.md`
-- prompt log della fase
-
-**Comportamento atteso**
-
-Per scenari non approvati, l'app presenta alternative calcolate modificando prezzo, canale o mese uno alla volta. Ogni alternativa mostra quale input cambia, il nuovo verdetto e le metriche che migliorano o peggiorano.
-
-**Criteri di accettazione**
-
-- i suggerimenti restano nel supporto osservato e nei valori ufficiali;
-- il ranking è deterministico;
-- ogni alternativa cambia una sola variabile;
-- un risultato `GO` non riceve un percorso correttivo;
-- l'app dichiara quando il modello non trova miglioramenti;
-- il testo usa il termine "aggiustamento del modello" e non promette un esito commerciale.
-
-**Test necessari**
-
-- test per `CONDITIONAL`, `NO-GO` e `GO`;
-- test di spareggio;
-- test senza alternative migliori;
-- test ai limiti di prezzo;
-- test che verifica il vincolo di una variabile per proposta.
-
-**Rischi**
-
-Il ranking può sembrare una raccomandazione strategica completa. L'interfaccia mostrerà anche gli effetti negativi e le assunzioni mantenute fisse.
-
-**Condizione di arresto**
-
-La fase termina con un massimo contenuto di alternative utili per dimensione. Il team non crea un ottimizzatore multi-obiettivo o combinazioni automatiche di più variabili.
-
-**Risultato della Fase 5, 2026-09-16**
-
-- `/api/compare` aggiunge aggiustamenti aggregati soltanto per baseline `CONDITIONAL` o `NO-GO`; uno scenario `GO` non riceve un percorso correttivo;
-- backend valuta prezzo nella stessa griglia supportata, canali ufficiali alternativi e undici mesi alternativi, modificando una sola variabile per candidato;
-- ranking deterministico: verdetto migliore, minori soglie fallite, minore distanza normalizzata dalle soglie; spareggio fisso prezzo, canale, mese;
-- interfaccia mostra al massimo tre proposte, una migliore per ciascuna leva disponibile, con metriche migliorate, trade-off e assunzioni mantenute fisse;
-- testi usano `Model adjustments` e dichiarano che non costituiscono promessa commerciale; nessun ottimizzatore multi-obiettivo o combinazione automatica è stato aggiunto;
-- test sintetici coprono `GO`, `CONDITIONAL`, `NO-GO`, assenza di miglioramenti, ordinamento, limiti e vincolo a una sola variabile; test API e frontend verificano contratto aggregato e rendering backend.
-
-### Postilla 5A: presentazione orientata alla decisione
-
-Questa postilla non modifica ranking, formule, soglie, contratti API o condizioni della Fase 5. Rende invece leggibile il suo scopo manageriale: aiutare a valutare un cambiamento minimo quando lo scenario non passa.
-
-- la sezione appare alla fine della pagina, dopo qualità dati, e si chiama `Ways to improve this scenario`;
-- ogni proposta usa un titolo discorsivo, per esempio `Consider launching in July`, invece di concatenare verdetto, nome campo e valori tecnici;
-- il testo chiarisce il nuovo verdetto, la sola modifica applicata, gli input fissi, il miglioramento e gli eventuali trade-off in un breve paragrafo;
-- la pagina conserva fino a tre leve distinte e la dichiarazione che sono aggiustamenti del modello, non promesse commerciali;
-- non si aggiungono pulsanti che applicano automaticamente scenari, nuove analisi o logica nel browser.
-
-**Risultato della Postilla 5A, 2026-09-16**
-
-- sezione spostata alla fine dei risultati e rinominata `Ways to improve this scenario`;
-- titoli tecnici e blocchi ripetitivi sostituiti da proposte discorsive fornite dal backend;
-- test frontend verifica rendering del titolo backend e assenza del vecchio sottotitolo tecnico.
-
-### Postilla 5B: accesso ai suggerimenti dagli altri scenari
-
-**Esito dell'audit**
-
-Il calcolo non è legato ai valori usati durante lo sviluppo. `/api/compare` produce un solo oggetto `model_adjustments`, riferito esclusivamente allo scenario indicato da `baseline_index`, e lo omette quando quella baseline è `GO`. La prova live con due scenari diversi ha confermato che anche Scenario 2 riceve suggerimenti corretti quando viene selezionato come baseline. Il problema è quindi di accesso e comprensione: dalla scheda di un altro scenario `CONDITIONAL` o `NO-GO` non esiste un percorso evidente verso i suoi suggerimenti. Inoltre, i test API correnti verificano gli aggiustamenti soltanto con uno scenario.
-
-**Soluzione minima proposta**
-
-Si conserva un solo scenario attivo e un solo calcolo di aggiustamenti per richiesta. Nella scheda di confronto di ogni scenario non selezionato con verdetto `CONDITIONAL` o `NO-GO` compare l'azione `Review ways to improve Scenario N`. L'azione seleziona quello scenario come baseline usando il meccanismo già esistente e invia di nuovo gli input correnti al backend. I pannelli dettagliati e la sezione finale vengono quindi aggiornati insieme.
-
-La sezione finale usa il titolo `Ways to improve Scenario N` e una frase esplicita che la collega alla baseline selezionata. Uno scenario `GO` non mostra l'azione, perché non richiede un percorso correttivo. L'azione non applica automaticamente alcun suggerimento e non modifica prezzo, canale, mese o orizzonte.
-
-Non si calcolano in parallelo gli aggiustamenti per tutti e tre gli scenari: triplicherebbe nel caso peggiore il lavoro del modello, allungherebbe la risposta e produrrebbe fino a nove proposte contemporanee. Non servono nuovi endpoint, nuove formule o un nuovo formato API.
-
-**File probabilmente coinvolti**
-
-- `public/app.js`, per il collegamento tra scheda di confronto e baseline;
-- `public/index.html`, soltanto per il testo contestuale della sezione finale;
-- `public/styles.css`, soltanto per lo stato visivo e il focus dell'azione;
-- `test_api.py` e `test_public_app.py`;
-- `README.md`, se la descrizione del confronto richiede il chiarimento;
-- `IMPLEMENTATION_PLAN.md` e prompt log della fase.
-
-**Criteri di accettazione**
-
-- con una baseline `GO` e un altro scenario `CONDITIONAL` o `NO-GO`, la scheda non selezionata offre l'azione per esaminare i suoi suggerimenti;
-- l'azione seleziona lo scenario corretto, invia il relativo `baseline_index` e aggiorna confronto, recommendation, metriche e sezione finale;
-- il titolo finale identifica il numero dello scenario selezionato e non lascia intendere che le proposte valgano per tutti gli scenari;
-- due o tre scenari non approvati possono essere esaminati uno dopo l'altro senza risultati obsoleti;
-- una baseline `GO` mantiene nascosta la sezione finale e le schede `GO` non mostrano azioni correttive;
-- rimozione della baseline, timeout ed errore non lasciano visibili suggerimenti appartenenti allo scenario precedente;
-- controllo e stato sono comprensibili da tastiera e senza dipendere soltanto dal colore;
-- formule, ranking e contratto aggregato della Fase 5 restano invariati.
-
-**Test necessari**
-
-- test API con più scenari che dimostra che `model_adjustments` segue `baseline_index` e non il primo scenario;
-- test frontend che verifica l'azione soltanto sulle schede non selezionate e non `GO`;
-- test frontend del passaggio Scenario 1 → Scenario 2 → Scenario 3, compreso l'invio dell'indice corretto e la pulizia dei risultati precedenti;
-- test di regressione per rimozione della baseline, timeout, errori e assenza di logica economica nel browser;
-- smoke test reale con una baseline `GO` e almeno due scenari non approvati.
-
-**Condizione di arresto**
-
-La postilla termina quando ogni scenario non approvato può aprire il proprio percorso di miglioramento attraverso la baseline esistente. Dopo test mirati, suite completa, documentazione, prompt log e pull request, il team si ferma senza iniziare la Fase 6.
-
-**Risultato della Postilla 5B, 2026-09-16**
-
-- ogni scheda di confronto non selezionata con verdetto `CONDITIONAL` o `NO-GO` offre `Review ways to improve Scenario N`;
-- l'azione riusa la selezione baseline e la richiesta backend esistenti, senza cambiare endpoint, formule o ranking;
-- la sezione finale identifica lo scenario selezionato e dichiara che le proposte si applicano solo a quello;
-- test API con due scenari verifica che `model_adjustments` segue `baseline_index`; test frontend verifica l'azione e il contesto.
-
-### Postilla 5C: stato visibile anche per una baseline GO
-
-**Esito dell'audit**
-
-Gli input segnalati — EUR 2,19, `DTC Online`, January e orizzonte 12 mesi — producono correttamente `GO`: LTV:CAC 6,04 contro 3,00, payback 10,78 mesi contro 12,00 e accettabilità 65,5% contro 35,0%. Production mostra lo stesso risultato.
-
-La sezione finale manca per una condizione intenzionale ma poco chiara. `/api/compare` chiama `model_adjustments` soltanto quando la baseline non è `GO`; di conseguenza il frontend non riceve dati e mantiene nascosta l'intera sezione. Tuttavia `model_adjustments` gestisce già `GO` con lo stato `not_needed`, una spiegazione e una lista vuota. Questo stato esistente non è raggiungibile attraverso l'API pubblica. Non si tratta quindi di un errore nei valori inseriti, nel modello o nel deployment, ma di un'integrazione incompleta tra un risultato backend già previsto e la risposta API.
-
-**Soluzione minima proposta**
-
-`/api/compare` restituisce sempre `model_adjustments` per la baseline selezionata. Per `GO`, riusa lo stato backend esistente `not_needed`, che termina prima della ricerca dei candidati: la sezione finale diventa visibile, dichiara che lo scenario supera già tutte le soglie approvate e non mostra proposte correttive. Per `CONDITIONAL` e `NO-GO`, contenuto, ranking e massimo di tre alternative restano invariati.
-
-Non vengono inventati miglioramenti per uno scenario `GO`, non cambia il verdetto e non si aggiungono formule nel browser. Le schede di confronto `GO` continuano a non mostrare `Review ways to improve`, perché quella azione serve soltanto a raggiungere suggerimenti correttivi da una scheda non selezionata; la baseline `GO` mostra invece il proprio stato conclusivo nella sezione finale.
-
-**File probabilmente coinvolti**
-
-- `api/index.py`, per esporre lo stato già restituito da `model_adjustments` anche per `GO`;
-- `public/app.js`, soltanto se serve distinguere chiaramente lo stato vuoto senza duplicare testi backend;
-- `test_api.py`, `test_public_app.py` e, soltanto se cambia il contratto interno, `test_decision_support.py`;
-- `README.md`, se la checklist descrive quando appare la sezione;
-- `IMPLEMENTATION_PLAN.md` e prompt log della fase.
-
-**Criteri di accettazione**
-
-- la combinazione EUR 2,19, `DTC Online`, January e 12 mesi mostra una sezione finale visibile per Scenario 1;
-- la sezione dichiara che tutte le soglie approvate sono superate e che non serve un aggiustamento correttivo;
-- lo stato `not_needed` contiene zero alternative e non avvia la scansione di prezzi, canali o mesi;
-- passando da una baseline non approvata a una `GO`, le proposte precedenti vengono rimosse e sostituite dal messaggio `not_needed`;
-- passando da `GO` a `CONDITIONAL` o `NO-GO`, le alternative continuano a essere calcolate come oggi;
-- le schede non selezionate `GO` non mostrano l'azione correttiva;
-- la risposta resta aggregata e non espone identificativi o righe sorgente;
-- verdetti, formule, soglie, ranking e limite di tre alternative non cambiano.
-
-**Test necessari**
-
-- test API con gli input segnalati che verifica `GO`, `model_adjustments.status == "not_needed"` e lista vuota;
-- test unitario che dimostra l'uscita anticipata per `GO` senza valutare candidati;
-- test frontend che verifica la sezione visibile e priva di schede alternative per `not_needed`;
-- test frontend del passaggio `NO-GO → GO → NO-GO`, per escludere contenuti obsoleti;
-- regressione multi-scenario: azione presente soltanto sulle schede non selezionate `CONDITIONAL` o `NO-GO`;
-- smoke test Production con gli input segnalati.
-
-**Condizione di arresto**
-
-La postilla termina quando ogni baseline valutata produce una sezione finale esplicita: alternative per `CONDITIONAL` e `NO-GO`, oppure conferma che non servono correzioni per `GO`. Dopo test mirati, suite completa, documentazione, prompt log e pull request, il team si ferma senza iniziare la Fase 6.
-
-**Risultato della Postilla 5C, 2026-09-16**
-
-- `/api/compare` restituisce sempre lo stato `model_adjustments` della baseline selezionata;
-- per `GO`, lo stato `not_needed` riusa la spiegazione backend e zero alternative, senza ricerca di candidati;
-- la sezione finale resta visibile per una baseline `GO` e mostra soltanto la spiegazione `not_needed`;
-- test API copre gli input EUR 2,19, `DTC Online`, January e 12 mesi; test frontend copre il rendering dello stato senza alternative.
-
-### Fase 6: modalità stampa
-
-**File probabilmente coinvolti**
-
-- `public/index.html`
-- `public/app.js`
-- `public/styles.css`
-- `README.md`, per le risposte pertinenti alla checklist
-- `IMPLEMENTATION_PLAN.md`
-- prompt log della fase
-
-**Comportamento atteso**
-
-Un comando di stampa apre il dialogo del browser. Il foglio stampato include input, verdetto, metriche, prospettive CMO/CFO, compromesso, fonti e timestamp della valutazione. Controlli interattivi e sezioni irrilevanti non compaiono.
-
-**Criteri di accettazione**
-
-- layout leggibile in A4 verticale e orizzontale;
-- nessun testo tagliato o pannello sovrapposto;
-- colori non indispensabili alla comprensione;
-- URL e data della valutazione visibili;
-- nessuna libreria o generatore PDF server-side.
-
-**Test necessari**
-
-- anteprima di stampa in Chromium;
-- prova con uno e tre scenari;
-- prova in scala di grigi;
-- controllo di contenuto sensibile assente.
-
-**Rischi**
-
-Le sezioni espandibili possono risultare chiuse nella stampa. Il foglio `@media print` definirà quali dettagli includere e li renderà leggibili senza dipendere dallo stato interattivo.
-
-**Condizione di arresto**
-
-La fase termina quando il browser salva una copia PDF leggibile. Il team non implementa template PDF, invio email o archiviazione.
-
-**Risultato della Fase 6, 2026-09-16**
-
-- `Print evaluation` usa il dialogo nativo del browser; non aggiunge librerie o generazione PDF server-side;
-- record di stampa include timestamp della valutazione e URL della pagina;
-- CSS di stampa mostra input, recommendation, trade-off, prospettive, metriche e fonti delle metriche; nasconde controlli e qualità dati;
-- test frontend verifica comando nativo, metadati e regole di stampa. Verifica browser conferma un caso con uno scenario e uno con tre scenari.
-
-### Fase 7: documentazione, privacy, test completi e verifica Vercel
-
-**File probabilmente coinvolti**
-
-- `README.md`
-- `PROJECT_CONTEXT.md`
-- `DATA_CONFIDENTIALITY.md`, soltanto se serve chiarire la provenienza del template senza indebolire le regole;
-- `data_loader.py`
-- tutti i file `test_*.py` interessati;
-- `.github/workflows/tests.yml`, soltanto se la suite richiede un comando aggiuntivo;
-- prompt log della sessione corrente.
-
-**Comportamento atteso**
-
-La documentazione riceve una revisione finale della checklist universitaria, descrive il trattamento dei dati e riporta il dominio pubblico definitivo. La fase verifica di nuovo l'esclusione dei quattro identificativi introdotta nella Fase 0. La suite completa passa con Python 3.12 e il deployment Production successivo al merge serve il commit di `main`.
-
-**Criteri di accettazione**
-
-- README risponde a dati, API key, deployment, file generati, storage, robustezza, spiegabilità e rilevanza aziendale;
-- README dichiara assenza di API esterne, API key, database e persistenza;
-- README documenta provenienza del CSV e mancato uso degli identificativi;
-- "Our Approach" resta in linguaggio aziendale;
-- `PROJECT_CONTEXT.md` riflette le decisioni implementate e i limiti;
-- il prompt log corrente è completo;
-- `python -m compileall .` e `python -m pytest` passano nel CI Python 3.12;
-- il deployment Vercel Production riporta `success`, commit di `main` e dominio stabile;
-- una verifica del sito pubblico copre caricamento pagina e scenario base.
-
-**Test necessari**
-
-- suite completa Python;
-- test di non esposizione dei quattro identificativi;
-- test API per risposte aggregate ed errori sicuri;
-- test manuali responsive, tastiera e stampa;
-- smoke test sull'URL Production dopo il merge;
-- confronto tra SHA deployato e SHA di `origin/main`.
-
-**Rischi**
-
-Un URL di deployment specifico non garantisce un dominio stabile. Il team inserirà nel README il dominio pubblico definitivo confermato da Vercel e conserverà l'URL verificato come evidenza del baseline finché l'alias non viene confermato.
-
-**Condizione di arresto**
-
-La fase termina dopo CI verde, merge approvato, deployment Production riuscito e controllo dello SHA. Problemi esterni a questo scope diventeranno task separati.
-
-**Risultato della Fase 7, 2026-09-16**
-
-- README completa la checklist universitaria: dominio Vercel stabile, assenza di file derivati dai
-  dati e fixture con sole sentinelle sintetiche;
-- PROJECT_CONTEXT registra il comportamento effettivamente rilasciato, confini privacy, assenza
-  di logica business nel browser e stampa nativa;
-- i controlli privacy/API passano per i quattro identificativi, le risposte aggregate e le route
-  CSV o righe grezze inesistenti;
-- \`python -m pytest\` passa localmente con 33 test e \`python -m compileall .\` passa;
-- dopo il merge, Vercel Production deve essere verificato sul commit di \`main\` e sul dominio
-  stabile; la traduzione dei file italiani è un task separato successivo.
-
-## Strategia di test e gate di merge
-
-Ogni fase avrà un branch e una pull request dedicati. Il protocollo di arresto seguente è obbligatorio:
-
-1. eseguire i test mirati della fase;
-2. eseguire l'intera suite;
-3. aggiornare `IMPLEMENTATION_PLAN.md` con decisioni, risultati e limiti emersi;
-4. aggiornare README e la documentazione interessata, comprese le risposte pertinenti alla checklist;
-5. includere il prompt log della fase;
-6. verificare l'assenza di logica aziendale nel JavaScript e di dati non aggregati nelle API;
-7. aprire la pull request e attendere GitHub Actions con Python 3.12;
-8. fermarsi senza iniziare la fase successiva.
-
-La fase successiva partirà da un nuovo branch creato dopo il merge della fase precedente e dopo l'aggiornamento locale di `main` da `origin/main`. Il team non considera completata una fase se il codice esiste soltanto in locale, se il CI non passa o se la pull request non è stata integrata.
-
-## Documentazione finale
-
-**Postilla di traduzione dopo la Fase 7, 2026-09-16**
-
-Dopo il completamento e il merge della Fase 7, il team aprirà un task separato per inventariare e
-tradurre in inglese tutti i file della repository scritti in italiano, preservando struttura,
-significato tecnico e dati. Questa traduzione non fa parte della Fase 7: non deve confondere la
-verifica finale del comportamento pubblicato con una trasformazione estesa della documentazione.
-
-Ogni fase aggiornerà le risposte della checklist del README che il proprio lavoro rende pertinenti. La Fase 7 controllerà completezza e coerenza dell'insieme; non rimanderà alla fine la documentazione delle decisioni prese nelle fasi precedenti.
-
-Il rilascio dovrà documentare:
-
-- dominio Vercel definitivo e commit verificato;
-- assenza di API esterne e chiavi API;
-- assenza di account, database e persistenza;
-- provenienza del CSV dal template universitario;
-- esclusione di `first_name`, `last_name`, `email` e `respondent_id` dal runtime;
-- uso esclusivo di output aggregati;
-- formule, fonti, soglie, assunzioni e limiti;
-- limiti della sensibilità del modello e dei suggerimenti calcolati;
-- risposta esplicita alla checklist del README;
-- prompt log obbligatorio.
-
-## Non obiettivi
-
-- account, autenticazione o profili;
-- database, persistenza o cronologia degli scenari;
-- chatbot, LLM o testo generato;
-- API esterne o meteo live;
-- città, quote di mercato o competitor inventati;
-- machine learning;
-- formule o regole aziendali nel JavaScript;
-- cancellazione o riscrittura dei dati originali;
-- redesign completo dell'interfaccia;
-- generazione PDF server-side;
-- modifica di `AGENTS.md` o dei log precedenti.
-
-## Criterio finale di completamento
-
-Il lavoro sarà completo quando un manager potrà valutare da uno a tre scenari, capire il verdetto unico, leggere le prospettive CMO e CFO, confrontare canali, osservare la sensibilità di prezzo e mese, ricevere alternative calcolate e stampare il risultato. Le API dovranno esporre soltanto dati aggregati, la suite dovrà passare con Python 3.12 e Vercel dovrà servire il commit integrato in `main`.
+Translation result, 2026-09-16: \`IMPLEMENTATION_PLAN.md\` is now English. CSV values, supplied
+PDF material, and prompt logs remain unchanged because they are source data, source material, or
+verbatim records rather than repository-authored documentation.
