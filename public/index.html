@@ -28,10 +28,19 @@
       <p id="status" class="status" aria-live="polite"></p>
       <section id="result" hidden>
         <div class="panel decision"><p class="eyebrow">Recommendation</p><h2 id="verdict"></h2><p id="driver"></p><p id="trade-off"></p></div>
-        <section aria-labelledby="metrics-heading"><h2 id="metrics-heading">Official metrics</h2><div id="metrics" class="metrics"></div></section>
+        <section aria-labelledby="metrics-heading">
+          <div class="section-heading">
+            <h2 id="metrics-heading">Decision metrics</h2>
+            <div class="detail-controls">
+              <button id="expand-details" type="button" class="secondary">Expand all explanations</button>
+              <button id="collapse-details" type="button" class="secondary">Close all explanations</button>
+            </div>
+          </div>
+          <div id="metrics" class="metrics"></div>
+        </section>
         <section class="panel"><h2>Decision checks</h2><ul id="reasons"></ul></section>
-        <section class="panel"><h2>Assumptions and thresholds</h2><p id="assumptions"></p></section>
-        <details class="panel"><summary>Data quality and cleaning</summary><pre id="data-quality"></pre></details>
+        <section class="panel"><h2>How to read this page</h2><p id="assumptions"></p></section>
+        <details class="panel explanation"><summary>Data quality and cleaning</summary><pre id="data-quality"></pre></details>
       </section>
     </main>
   </body>

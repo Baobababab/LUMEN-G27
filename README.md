@@ -46,7 +46,7 @@ Check each box in this README as you go — not at the end, while you're working
 - [ ] **Files generated along the way**: if your tool (or Codex) created new files derived from the provided data, did you think about whether they should be committed to the repo or not?
 - [ ] **Storage**: if you're keeping any data, in what structure, and why that choice over another?
 - [ ] **Robustness**: what happens if the user gives an empty, inconsistent, or unexpected input?
-- [ ] **Explainability**: can you explain to someone non-technical why your tool does what it does?
+- [x] **Explainability**: each decision metric shows its business meaning, status, threshold comparison where approved, and an expandable explanation of formula, source, assumptions, and limits. The browser renders backend-provided metadata and does not calculate business logic.
 - [ ] **Business relevance**: does your prototype actually answer the problem posed in the brief, or is it an interesting technical build that's off-target?
 
 These questions aren't here to slow you down — they're part of what's being evaluated. A thoughtful answer to one of them is worth more than an extra feature nobody asked for.
