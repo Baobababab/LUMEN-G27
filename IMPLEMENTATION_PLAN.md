@@ -737,6 +737,18 @@ Un URL di deployment specifico non garantisce un dominio stabile. Il team inseri
 
 La fase termina dopo CI verde, merge approvato, deployment Production riuscito e controllo dello SHA. Problemi esterni a questo scope diventeranno task separati.
 
+**Risultato della Fase 7, 2026-09-16**
+
+- README completa la checklist universitaria: dominio Vercel stabile, assenza di file derivati dai
+  dati e fixture con sole sentinelle sintetiche;
+- PROJECT_CONTEXT registra il comportamento effettivamente rilasciato, confini privacy, assenza
+  di logica business nel browser e stampa nativa;
+- i controlli privacy/API passano per i quattro identificativi, le risposte aggregate e le route
+  CSV o righe grezze inesistenti;
+- \`python -m pytest\` passa localmente con 33 test e \`python -m compileall .\` passa;
+- dopo il merge, Vercel Production deve essere verificato sul commit di \`main\` e sul dominio
+  stabile; la traduzione dei file italiani è un task separato successivo.
+
 ## Strategia di test e gate di merge
 
 Ogni fase avrà un branch e una pull request dedicati. Il protocollo di arresto seguente è obbligatorio:
@@ -753,6 +765,13 @@ Ogni fase avrà un branch e una pull request dedicati. Il protocollo di arresto 
 La fase successiva partirà da un nuovo branch creato dopo il merge della fase precedente e dopo l'aggiornamento locale di `main` da `origin/main`. Il team non considera completata una fase se il codice esiste soltanto in locale, se il CI non passa o se la pull request non è stata integrata.
 
 ## Documentazione finale
+
+**Postilla di traduzione dopo la Fase 7, 2026-09-16**
+
+Dopo il completamento e il merge della Fase 7, il team aprirà un task separato per inventariare e
+tradurre in inglese tutti i file della repository scritti in italiano, preservando struttura,
+significato tecnico e dati. Questa traduzione non fa parte della Fase 7: non deve confondere la
+verifica finale del comportamento pubblicato con una trasformazione estesa della documentazione.
 
 Ogni fase aggiornerà le risposte della checklist del README che il proprio lavoro rende pertinenti. La Fase 7 controllerà completezza e coerenza dell'insieme; non rimanderà alla fine la documentazione delle decisioni prese nelle fasi precedenti.
 
