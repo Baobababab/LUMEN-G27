@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from acceptance import AcceptanceDataError
 from constants import DEFAULT_PAYBACK_HORIZON_MONTHS
-from data_loader import cleaning_report
+from data_loader import cleaning_report, load_all
 from economics import ltv, monthly_contribution, unit_contribution
 from verdict import verdict
 
@@ -151,6 +151,58 @@ def _metric_details(metrics: dict, decision_metrics: dict, decided_by: str) -> l
     ]
 
 
+def _competitive_positioning(price: float, channel: str) -> dict:
+    """Compare the selected single-can price with observed channel competitors."""
+    rows = load_all()["competitor_prices_by_channel"]
+    rows = rows.loc[(rows["channel"] == channel) & (rows["format"] == "Single can (330ml)")]
+    competitors = [
+        {
+            "name": row.competitor,
+            "positioning": row.positioning,
+            "price_eur": float(row.price_eur),
+        }
+        for row in rows.itertuples()
+    ]
+    if not competitors:
+        return {"competitors": [], "label": "No observed comparison", "summary": "No comparable competitor price is available for this channel."}
+    closest = min(competitors, key=lambda item: abs(item["price_eur"] - price))
+    labels = {
+        "Mass market": "Accessible",
+        "Heritage / loyal niche": "Accessible",
+        "Premium performance": "Premium",
+        "Boutique adaptogenic": "Very premium",
+    }
+    label = labels[closest["positioning"]]
+    return {
+        "competitors": competitors,
+        "label": label,
+        "summary": f"Closest observed reference: {closest['name']} at EUR {closest['price_eur']:.2f}, positioned as {closest['positioning']}.",
+        "limit": "Labels describe the supplied competitor observations, not the full German market.",
+    }
+
+
+def _perspectives(metrics: dict, positioning: dict) -> dict:
+    """Group existing evidence for CMO and CFO without making new verdicts."""
+    return {
+        "cmo": {
+            "title": "CMO perspective",
+            "points": [
+                f"Price acceptability index: {metrics['price_acceptability_index']:.1%}.",
+                f"Observed price position: {positioning['label']}.",
+                "Premium coherence is assessed against observed competitor positioning only.",
+            ],
+        },
+        "cfo": {
+            "title": "CFO perspective",
+            "points": [
+                f"Unit contribution: EUR {metrics['unit_contribution_eur']:.2f}.",
+                f"Lifetime value to customer acquisition cost: {metrics['ltv_cac_ratio']:.2f}x.",
+                f"Payback: {metrics['payback_months']:.2f} months.",
+            ],
+        },
+    }
+
+
 @app.post("/api/scenario")
 def evaluate_scenario(request: ScenarioRequest) -> dict:
     """Return only aggregated scenario results; never return raw survey data."""
@@ -175,6 +227,7 @@ def evaluate_scenario(request: ScenarioRequest) -> dict:
             "payback_horizon_months": decision_metrics["payback_horizon_months"],
             "acceptance_floor": decision_metrics["acceptance_floor"],
         }
+        positioning = _competitive_positioning(request.price, request.channel)
         return {
             "verdict": decision["verdict"],
             "decided_by": decision["decided_by"],
@@ -182,6 +235,8 @@ def evaluate_scenario(request: ScenarioRequest) -> dict:
             "trade_off": decision["trade_off"],
             "metrics": metrics,
             "metric_details": _metric_details(metrics, decision_metrics, decision["decided_by"]),
+            "competitive_positioning": positioning,
+            "perspectives": _perspectives(metrics, positioning),
             "data_quality": cleaning_report(),
         }
     except AcceptanceDataError as error:

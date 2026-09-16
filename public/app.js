@@ -40,6 +40,14 @@ function showResult(data) {
   document.querySelector("#verdict").textContent = `${data.verdict} recommendation`;
   document.querySelector("#driver").textContent = `Decision driver: ${data.decided_by}`;
   document.querySelector("#trade-off").textContent = data.trade_off;
+  document.querySelector("#positioning-summary").textContent = `${data.competitive_positioning.label}. ${data.competitive_positioning.summary}`;
+  document.querySelector("#competitors").innerHTML = data.competitive_positioning.competitors.map((item) =>
+    `<li>${item.name}: EUR ${item.price_eur.toFixed(2)} (${item.positioning})</li>`
+  ).join("");
+  for (const key of ["cmo", "cfo"]) {
+    document.querySelector(`#${key}-title`).textContent = data.perspectives[key].title;
+    document.querySelector(`#${key}-points`).innerHTML = data.perspectives[key].points.map((point) => `<li>${point}</li>`).join("");
+  }
   document.querySelector("#reasons").innerHTML = data.reasons.map((reason) => `<li>${reason}</li>`).join("");
   document.querySelector("#assumptions").textContent =
     "Open a metric to see its business meaning, formula, source, assumptions, and limits.";

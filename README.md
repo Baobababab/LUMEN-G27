@@ -60,4 +60,4 @@ These questions aren't here to slow you down — they're part of what's being ev
 
 ## Our Approach
 
-LUMEN needs a defensible German launch scenario, not a generic calculator. Our tool lets a manager test a retail price, sales channel, launch month, and payback horizon. It combines channel economics, customer price acceptability, seasonality, and LTV:CAC into a transparent GO, CONDITIONAL, or NO-GO verdict. We deliberately show the trade-off between customer reach and financial return, exclude personal data, and publish only aggregated results.
+LUMEN needs a defensible German launch scenario, not a generic calculator. Our tool lets a manager test a retail price, sales channel, launch month, and payback horizon. It combines channel economics, customer price acceptability, seasonality, and lifetime value to customer acquisition cost into one transparent GO, CONDITIONAL, or NO-GO verdict. It also shows the same scenario through CMO and CFO perspectives, without creating competing verdicts. We deliberately show the trade-off between customer reach and financial return, exclude personal data, and publish only aggregated results.
