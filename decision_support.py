@@ -178,7 +178,7 @@ def _metric_changes(before: dict, after: dict) -> tuple[list[str], list[str]]:
 def model_adjustments(
     price: float, channel: str, month: int, payback_horizon_months: float
 ) -> dict:
-    """Return up to three single-variable model adjustments for a non-GO scenario."""
+    """Return the adjustment state and up to three single-variable alternatives."""
     baseline = verdict(price, channel, month, payback_horizon_months)
     if baseline["verdict"] == "GO":
         return {

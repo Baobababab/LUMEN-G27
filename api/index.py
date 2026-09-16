@@ -298,11 +298,10 @@ def compare_scenarios(request: ScenarioCompareRequest) -> dict:
             scenarios[request.baseline_index]["metrics"],
         )
     selected = request.scenarios[request.baseline_index]
-    if scenarios[request.baseline_index]["verdict"] != "GO":
-        response["model_adjustments"] = model_adjustments(
-            selected.price,
-            selected.channel,
-            selected.month,
-            selected.payback_horizon_months,
-        )
+    response["model_adjustments"] = model_adjustments(
+        selected.price,
+        selected.channel,
+        selected.month,
+        selected.payback_horizon_months,
+    )
     return response

@@ -640,6 +640,13 @@ Non vengono inventati miglioramenti per uno scenario `GO`, non cambia il verdett
 
 La postilla termina quando ogni baseline valutata produce una sezione finale esplicita: alternative per `CONDITIONAL` e `NO-GO`, oppure conferma che non servono correzioni per `GO`. Dopo test mirati, suite completa, documentazione, prompt log e pull request, il team si ferma senza iniziare la Fase 6.
 
+**Risultato della Postilla 5C, 2026-09-16**
+
+- `/api/compare` restituisce sempre lo stato `model_adjustments` della baseline selezionata;
+- per `GO`, lo stato `not_needed` riusa la spiegazione backend e zero alternative, senza ricerca di candidati;
+- la sezione finale resta visibile per una baseline `GO` e mostra soltanto la spiegazione `not_needed`;
+- test API copre gli input EUR 2,19, `DTC Online`, January e 12 mesi; test frontend copre il rendering dello stato senza alternative.
+
 ### Fase 6: modalità stampa
 
 **File probabilmente coinvolti**
