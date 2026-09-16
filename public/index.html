@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LUMEN Scenario Cockpit</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <header>
+        <p class="eyebrow">LUMEN Germany market entry</p>
+        <h1>Scenario cockpit</h1>
+        <p>Evaluate a proposed launch price, sales channel, and month using LUMEN's official analysis modules.</p>
+      </header>
+
+      <form id="scenario-form" class="panel">
+        <div class="controls">
+          <label>Retail price (EUR)<input id="price" name="price" type="number" min="0.01" step="0.01" value="2.19" required></label>
+          <label>Sales channel<select id="channel" name="channel"><option>DTC Online</option><option>Retail/Grocery</option><option>Gym &amp; Office</option></select></label>
+          <label>Launch month<select id="month" name="month"><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></label>
+          <label>Payback horizon (months)<input id="horizon" name="payback_horizon_months" type="number" min="0.01" step="0.01" value="12" required></label>
+        </div>
+        <button type="submit">Evaluate scenario</button>
+      </form>
+
+      <p id="status" class="status" aria-live="polite"></p>
+      <section id="result" hidden>
+        <div class="panel decision"><p class="eyebrow">Recommendation</p><h2 id="verdict"></h2><p id="driver"></p><p id="trade-off"></p></div>
+        <section aria-labelledby="metrics-heading"><h2 id="metrics-heading">Official metrics</h2><div id="metrics" class="metrics"></div></section>
+        <section class="panel"><h2>Decision checks</h2><ul id="reasons"></ul></section>
+        <section class="panel"><h2>Assumptions and thresholds</h2><p id="assumptions"></p></section>
+        <details class="panel"><summary>Data quality and cleaning</summary><pre id="data-quality"></pre></details>
+      </section>
+    </main>
+  </body>
+</html>

@@ -30,7 +30,7 @@ Agreed before building. Change these only by team decision, and update this sect
 
 | Decision | Choice | Why |
 |---|---|---|
-| Interface | **Streamlit**, deployed on Streamlit Community Cloud | Python only, connects straight to this repo, everyone can contribute |
+| Interface | **Static web frontend plus FastAPI on Vercel** | Vercel is required; the frontend is public while Python calculations and case data remain server-side |
 | Price acceptability | **Recomputed, segment-weighted index per channel** | The supplied test figures are identical across channels; without reweighting, channel choice cannot affect price acceptability |
 | Payback horizon | **User-adjustable slider, default 12 months** | Makes the CMO/CFO trade-off visible instead of hiding it in a constant |
 | Customer LTV | **Re-derived from the selected price** | Home-market LTV is priced in NL/DK/SE; copying it would make the ratio blind to price |
@@ -101,8 +101,7 @@ def acceptance_rate(price: float, channel: str) -> float:
     Raises AcceptanceDataError (not a silent fallback) when the data cannot support a
     result: a required table or column is missing, the channel's respondent subset is
     empty, a segment in that subset has no rows in the price-sensitivity data, or price
-    falls outside OBSERVED_PRICE_SUPPORT. app.py must catch AcceptanceDataError and show
-    the caller a caveat instead of a number, without running the verdict on it."""
+    falls outside OBSERVED_PRICE_SUPPORT. The API returns a caveat instead of a number and no verdict."""
 
 class AcceptanceDataError(Exception):
     """Raised by acceptance_rate() when the data cannot support a result — see docstring."""
@@ -125,8 +124,9 @@ def verdict(price: float, channel: str, month: int,
                 "trade_off": str, "metrics": dict}."""
 
 
-# app.py — owner E
-# Streamlit UI only. Imports the four modules above. Contains no business arithmetic.
+# api/index.py — public API
+# Validates public input, imports official modules, and returns aggregated results only.
+# public/ — web interface only. Contains no business arithmetic and never reads CSV files.
 ```
 
 Shared constants live in one place and are named, never inlined:
@@ -261,5 +261,5 @@ If an API key is ever needed, it goes in an environment variable, never in a com
 - The README checklist is answered, in writing, while building.
 - The "Our Approach" paragraph in `README.md` is written in business language.
 - acceptance.py raises AcceptanceDataError (not a silent fallback or a bare float) for any
-  input the data cannot support, and app.py catches it and shows a caveat.
+  input the data cannot support, and `api/index.py` returns a safe caveat for the web interface.
 - Every team member's prompt log is committed and merged. Work that is not merged does not exist.

@@ -17,6 +17,17 @@ The recommended internal and external data sources are listed in [`DATA_PLAN.md`
 
 One-sentence summary: LUMEN, a functional beverage brand, has to decide **price, positioning, and launch channel(s)** to enter the German market — with no real German sales data (LUMEN isn't there yet), and a real trade-off between the CMO (premium positioning) and the CFO (fast return on investment).
 
+## Run Locally
+
+Use Python 3.12 and install the project dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+vercel dev
+```
+
+Open the local URL printed by Vercel. The public page is served from `public/`; `api/index.py` calculates scenarios on the same origin.
+
 ## Rule #1 — Prompt Logging Is Automatic
 
 This repo includes an `AGENTS.md` file, which Codex reads automatically at the start of every task — you don't need to open or edit it. The first time you talk to Codex in a new conversation, it will ask for your **student ID**. Answer it, and from then on Codex logs every prompt you send it — automatically, verbatim — into `prompts/<your-id>/session-*.md`, without you doing anything else.
@@ -49,4 +60,4 @@ These questions aren't here to slow you down — they're part of what's being ev
 
 ## Our Approach
 
-*[To be filled in by the team at the end.]*
+LUMEN needs a defensible German launch scenario, not a generic calculator. Our tool lets a manager test a retail price, sales channel, launch month, and payback horizon. It combines channel economics, customer price acceptability, seasonality, and LTV:CAC into a transparent GO, CONDITIONAL, or NO-GO verdict. We deliberately show the trade-off between customer reach and financial return, exclude personal data, and publish only aggregated results.
