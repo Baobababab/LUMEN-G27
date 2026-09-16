@@ -3,7 +3,7 @@ import json
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from api.index import ScenarioRequest, _metric_state, app, evaluate_scenario
+from api.index import ScenarioRequest, _decision_driver, _metric_state, app, evaluate_scenario
 
 
 _FORBIDDEN_KEYS = {"respondent_id", "first_name", "last_name", "email"}
@@ -42,6 +42,7 @@ def test_api_returns_only_aggregated_scenario_results():
     assert set(result) == {
         "verdict",
         "decided_by",
+        "decision_driver",
         "reasons",
         "trade_off",
         "metrics",
@@ -76,6 +77,9 @@ def test_api_returns_only_aggregated_scenario_results():
         "ltv_cac_ratio": "ltv_cac_ratio",
         "payback_months": "payback_months",
     }[result["decided_by"]]
+    assert result["decision_driver"]["key"] == result["decided_by"]
+    assert result["decision_driver"]["label"]
+    assert result["decision_driver"]["context"]
     assert details[driver_key]["state"] == "monitor"
     assert details["unit_contribution_eur"]["comparison"] == "No approved decision threshold."
     assert result["competitive_positioning"]["competitors"]
@@ -92,6 +96,34 @@ def test_metric_states_follow_existing_verdict_pass_flags():
     assert _metric_state("price_acceptability_index", passed, "acceptance_rate") == "monitor"
     assert _metric_state("payback_months", passed, "acceptance_rate") == "favorable"
     assert _metric_state("ltv_cac_ratio", failed, "ltv_cac_ratio") == "critical"
+
+
+def test_decision_driver_uses_business_labels_and_threshold_context_for_each_metric():
+    metrics = {
+        "ltv_cac_ratio": 2.5,
+        "payback_months": 13.0,
+        "price_acceptability_index": 0.30,
+        "target_ltv_cac": 3.0,
+        "payback_horizon_months": 12.0,
+        "acceptance_floor": 0.35,
+    }
+    failed = {"ltv_cac_pass": False, "payback_pass": False, "acceptance_pass": False}
+
+    drivers = [_decision_driver(metrics, failed, key) for key in ("ltv_cac_ratio", "payback_months", "acceptance_rate")]
+
+    assert [item["label"] for item in drivers] == [
+        "Lifetime value to customer acquisition cost",
+        "Customer acquisition cost payback",
+        "Price acceptability index",
+    ]
+    assert all(item["key"] in {"ltv_cac_ratio", "payback_months", "acceptance_rate"} for item in drivers)
+    assert all("largest proportional miss" in item["context"] for item in drivers)
+
+    go = _decision_driver(metrics, {"ltv_cac_pass": True, "payback_pass": True, "acceptance_pass": True}, "ltv_cac_ratio")
+    conditional = _decision_driver(metrics, {"ltv_cac_pass": True, "payback_pass": False, "acceptance_pass": True}, "payback_months")
+
+    assert "smallest safety margin" in go["context"]
+    assert "largest proportional miss" in conditional["context"]
 
 
 def test_api_returns_a_safe_error_for_unsupported_price():
@@ -119,6 +151,18 @@ def test_api_serializes_non_recoverable_payback_as_null_without_non_finite_text(
     assert any("Not recoverable" in text for text in visible_text)
     assert all(token not in " ".join(visible_text).lower() for token in ("inf", "infinity", "nan"))
     assert all(token not in json.dumps(payload).lower() for token in ("inf", "infinity", "nan"))
+
+
+def test_api_trade_offs_use_absolute_threshold_language_for_all_channels():
+    client = TestClient(app)
+
+    trade_offs = [
+        client.post("/api/scenario", json={"price": 2.19, "channel": channel, "month": 7}).json()["trade_off"]
+        for channel in ("DTC Online", "Retail/Grocery", "Gym & Office")
+    ]
+
+    assert all("approved" in text and "threshold" in text for text in trade_offs)
+    assert all(term not in " ".join(trade_offs) for term in ("Prioritises", "Sacrifices", "Balances"))
 
 
 def test_api_hides_synthetic_identifiers_and_has_no_raw_data_routes():

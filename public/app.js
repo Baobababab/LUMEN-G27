@@ -10,6 +10,8 @@ const showAnalysisButton = document.querySelector("#show-analysis");
 const adjustments = document.querySelector("#adjustments");
 const printMetadata = document.querySelector("#print-metadata");
 let analysisRequested = false;
+let adjustmentAlternatives = [];
+let adjustmentBaselineIndex = 0;
 
 const money = (value) => new Intl.NumberFormat("en-IE", {
   style: "currency", currency: "EUR", minimumFractionDigits: 2,
@@ -32,7 +34,7 @@ function showMetrics(metricDetails) {
 
 function showResult(data) {
   document.querySelector("#verdict").textContent = `${data.verdict} recommendation`;
-  document.querySelector("#driver").textContent = `Decision driver: ${data.decided_by}`;
+  document.querySelector("#driver").textContent = `Decision driver: ${data.decision_driver.label}. ${data.decision_driver.context}`;
   document.querySelector("#trade-off").textContent = data.trade_off;
   document.querySelector("#positioning-summary").textContent = `${data.competitive_positioning.label}. ${data.competitive_positioning.summary}`;
   document.querySelector("#competitors").innerHTML = data.competitive_positioning.competitors.map((item) => `<li>${item.name}: EUR ${item.price_eur.toFixed(2)} (${item.positioning})</li>`).join("");
@@ -103,7 +105,7 @@ function showComparison(payload) {
     const signedMoney = `${delta.monthly_contribution_eur >= 0 ? "+" : ""}${money(delta.monthly_contribution_eur)}`;
     const signedLtv = `${delta.lifetime_value_eur >= 0 ? "+" : ""}${money(delta.lifetime_value_eur)}`;
     const difference = isBaseline ? "Selected baseline. Differences are zero." : `Monthly contribution vs selected baseline: ${signedMoney}. LTV vs selected baseline: ${signedLtv}.`;
-    const review = !isBaseline && item.verdict !== "GO" ? `<button type="button" class="secondary review-adjustments" data-baseline-index="${index}">Review ways to improve Scenario ${index + 1}</button>` : "";
+    const review = !isBaseline && item.verdict !== "GO" ? `<button type="button" class="secondary review-adjustments" data-baseline-index="${index}">Review model adjustments for Scenario ${index + 1}</button>` : "";
     return `<article class="comparison-card${isBaseline ? " comparison-card--selected" : ""}"><h3>Scenario ${index + 1}: ${item.verdict}</h3><p>${item.trade_off}</p><p>${difference}</p>${review}</article>`;
   }).join("");
 }
@@ -125,12 +127,14 @@ function showAnalysis(data) {
 
 function showAdjustments(data, baselineIndex) {
   if (!data) return;
+  adjustmentAlternatives = data.alternatives;
+  adjustmentBaselineIndex = baselineIndex;
   document.querySelector("#adjustments-title").textContent = `Ways to improve Scenario ${baselineIndex + 1}`;
-  document.querySelector("#adjustments-summary").textContent = data.status === "not_needed" ? data.summary : `These model-tested adjustments apply only to selected Scenario ${baselineIndex + 1}. ${data.summary}`;
-  document.querySelector("#adjustment-results").innerHTML = data.alternatives.map((item) => {
+  document.querySelector("#adjustments-summary").textContent = data.status === "not_needed" ? data.summary : `Select an alternative to replace the inputs in Scenario ${baselineIndex + 1} and evaluate it as the new baseline. ${data.summary}`;
+  document.querySelector("#adjustment-results").innerHTML = data.alternatives.map((item, index) => {
     const improvements = item.improvements.join(". ") || "No approved decision metric improves.";
     const tradeOffs = item.trade_offs.length ? `The model also shows this trade-off: ${item.trade_offs.join(". ")}.` : "No approved decision metric worsens under this change.";
-    return `<article class="adjustment-card"><h3>${item.headline}</h3><p>With this one change, the model returns a ${item.verdict} recommendation. ${item.held_constant} ${improvements}. ${tradeOffs}</p></article>`;
+    return `<article class="adjustment-card"><h3>${item.headline}</h3><p>With this one change, the model returns a ${item.verdict} recommendation. ${item.held_constant} ${improvements}. ${tradeOffs}</p><button type="button" class="secondary apply-adjustment" data-adjustment-index="${index}">Evaluate as selected baseline</button></article>`;
   }).join("");
   adjustments.hidden = false;
 }
@@ -147,6 +151,16 @@ comparisonResults.addEventListener("click", (event) => {
   const review = event.target.closest(".review-adjustments");
   if (!review) return;
   scenariosElement.querySelectorAll("[name=baseline]")[Number(review.dataset.baselineIndex)].checked = true;
+  refreshScenarioLabels();
+  form.requestSubmit();
+});
+adjustments.addEventListener("click", (event) => {
+  const apply = event.target.closest(".apply-adjustment");
+  if (!apply) return;
+  const scenario = scenariosElement.querySelectorAll(".scenario-fields")[adjustmentBaselineIndex];
+  const inputs = adjustmentAlternatives[Number(apply.dataset.adjustmentIndex)].inputs;
+  Object.entries(inputs).forEach(([name, value]) => { scenario.elements.namedItem(name).value = value; });
+  scenario.querySelector("[name=baseline]").checked = true;
   refreshScenarioLabels();
   form.requestSubmit();
 });

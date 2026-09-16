@@ -65,6 +65,31 @@ def _metric_state(metric_key: str, decision_metrics: dict, decided_by: str) -> s
     return "monitor" if decision_key == decided_by else "favorable"
 
 
+def _decision_driver(metrics: dict, decision_metrics: dict, decided_by: str) -> dict:
+    """Return a manager-facing label and threshold context for a stable machine key."""
+    labels = {
+        "ltv_cac_ratio": "Lifetime value to customer acquisition cost",
+        "payback_months": "Customer acquisition cost payback",
+        "acceptance_rate": "Price acceptability index",
+    }
+    contexts = {
+        "ltv_cac_ratio": f"LTV:CAC is {metrics['ltv_cac_ratio']:.2f}x against the {metrics['target_ltv_cac']:.2f}x target.",
+        "payback_months": f"Payback is {format_payback_months(metrics['payback_months'])} against the {metrics['payback_horizon_months']:.2f}-month horizon.",
+        "acceptance_rate": f"Price acceptability is {metrics['price_acceptability_index']:.1%} against the {metrics['acceptance_floor']:.1%} floor.",
+    }
+    pass_key = {
+        "ltv_cac_ratio": "ltv_cac_pass",
+        "payback_months": "payback_pass",
+        "acceptance_rate": "acceptance_pass",
+    }[decided_by]
+    selection = (
+        "It has the largest proportional miss among failed approved thresholds."
+        if not decision_metrics[pass_key]
+        else "It has the smallest safety margin among approved thresholds."
+    )
+    return {"key": decided_by, "label": labels[decided_by], "context": f"{contexts[decided_by]} {selection}"}
+
+
 def _metric_details(metrics: dict, decision_metrics: dict, decided_by: str) -> list[dict]:
     """Describe calculated metrics for a non-technical manager."""
     def detail(
@@ -251,6 +276,7 @@ def evaluate_scenario(request: ScenarioRequest) -> dict:
         return {
             "verdict": decision["verdict"],
             "decided_by": decision["decided_by"],
+            "decision_driver": _decision_driver(metrics, decision_metrics, decision["decided_by"]),
             "reasons": decision["reasons"],
             "trade_off": decision["trade_off"],
             "metrics": metrics,
