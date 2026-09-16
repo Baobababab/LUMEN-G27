@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from acceptance import AcceptanceDataError
 from constants import DEFAULT_PAYBACK_HORIZON_MONTHS
 from data_loader import cleaning_report, load_all
-from decision_support import scenario_analysis
+from decision_support import model_adjustments, scenario_analysis
 from economics import ltv, monthly_contribution, unit_contribution
 from verdict import verdict
 
@@ -296,5 +296,13 @@ def compare_scenarios(request: ScenarioCompareRequest) -> dict:
             selected.month,
             selected.payback_horizon_months,
             scenarios[request.baseline_index]["metrics"],
+        )
+    selected = request.scenarios[request.baseline_index]
+    if scenarios[request.baseline_index]["verdict"] != "GO":
+        response["model_adjustments"] = model_adjustments(
+            selected.price,
+            selected.channel,
+            selected.month,
+            selected.payback_horizon_months,
         )
     return response

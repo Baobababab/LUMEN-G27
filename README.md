@@ -47,7 +47,7 @@ Check each box in this README as you go — not at the end, while you're working
 - [x] **Storage**: the browser keeps up to three scenario inputs only while the page is open. We use this temporary session state because comparison needs no account, database, history, export, or personal data.
 - [x] **Robustness**: browser inputs restrict price to the observed EUR 0.62–3.09 support. The API validates scenario fields, a maximum of three scenarios, and the selected baseline; invalid input receives a safe 422 response without echoing it.
 - [x] **Explainability**: each decision metric shows its business meaning, status, threshold comparison where approved, and an expandable explanation of formula, source, assumptions, and limits. The browser renders backend-provided metadata and does not calculate business logic.
-- [x] **Business relevance**: the tool shows one decision verdict, channel trade-offs, price sensitivity within observed support, and the supplied seasonal context for the chosen launch month. It labels these outputs as model analysis, not demand forecasts.
+- [x] **Business relevance**: the tool shows one decision verdict, channel trade-offs, price sensitivity within observed support, supplied seasonal context, and up to three single-variable model adjustments for scenarios that do not pass. It labels these outputs as model analysis, not demand forecasts.
 
 These questions aren't here to slow you down — they're part of what's being evaluated. A thoughtful answer to one of them is worth more than an extra feature nobody asked for.
 
@@ -69,3 +69,7 @@ Price sensitivity evaluates one selected baseline scenario only, on request. It 
 The grid is EUR 0.02. The selected price and both support endpoints are always evaluated, for at most 126 evaluations per request (below the hard 250-evaluation limit). On 2026-09-16 with Python 3.11, warmed local data cache, DTC Online, July, and a 12-month horizon, three scans measured median latencies of 3,901 ms at EUR 0.01 (248 evaluations), 1,892 ms at EUR 0.02 (125 grid evaluations), and 768 ms at EUR 0.05 (51 grid evaluations). We set a 2,500 ms response budget and chose EUR 0.02 as the most precise tested step within it. Grid resolution is not economic precision and the result is not a demand forecast.
 
 Launch-month analysis ranks the supplied twelve `seasonality_and_weather.csv` indices with price, channel, and payback horizon fixed. It reports the selected month, its seasonal rank, contribution and payback change against the most favourable supplied month or tied window. It does not use live weather or infer causal demand effects.
+
+## Model adjustments
+
+For a `CONDITIONAL` or `NO-GO` selected baseline, the backend tests supported price points, other official channels, and other launch months. Each candidate changes one variable only. It ranks candidates by verdict, fewer failed approved thresholds, and smaller normalized distance from those thresholds; ties use price, then channel, then month order. The page shows at most one best adjustment for each lever, up to three, with its metric improvements, trade-offs, and inputs held fixed. A `GO` scenario receives no corrective path. These are model adjustments, not commercial promises.
