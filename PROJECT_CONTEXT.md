@@ -263,3 +263,17 @@ If an API key is ever needed, it goes in an environment variable, never in a com
 - acceptance.py raises AcceptanceDataError (not a silent fallback or a bare float) for any
   input the data cannot support, and `api/index.py` returns a safe caveat for the web interface.
 - Every team member's prompt log is committed and merged. Work that is not merged does not exist.
+
+## 11. Implemented decision record
+
+The deployed prototype supports one to three temporary browser-only scenarios. One selected
+scenario is the baseline for detailed analysis; comparison scenarios are shown relative to it.
+The backend returns aggregated results only, including the verdict, decision metrics, CMO and CFO
+perspectives, observed competitor context, optional sensitivity and launch-month analysis, and
+single-variable model adjustments where a baseline does not pass.
+
+The runtime excludes \`respondent_id\`, \`first_name\`, \`last_name\`, and \`email\` before the survey is
+used. Public endpoints do not serve CSV files or raw survey rows. The browser contains presentation
+logic only; business calculations remain in Python. The stable public deployment is
+\`https://lumen-g27.vercel.app\`. Managers can print an evaluated record with the browser's native
+print dialog; the record includes inputs, decision context, metrics, sources, timestamp, and URL.
