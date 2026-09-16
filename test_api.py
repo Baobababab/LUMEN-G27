@@ -188,3 +188,28 @@ def test_compare_api_returns_optional_selected_scenario_analysis_with_aggregate_
     assert analysis["price_sensitivity"]["evaluation_count"] <= 250
     assert analysis["launch_timing"]["selected_month"]["number"] == 7
     _assert_aggregated(analysis)
+
+
+def test_compare_api_returns_aggregated_model_adjustments_only_for_a_non_go_baseline():
+    client = TestClient(app)
+    response = client.post(
+        "/api/compare",
+        json={"scenarios": [{"price": 1.79, "channel": "DTC Online", "month": 1}]},
+    )
+
+    assert response.status_code == 200
+    adjustments = response.json()["model_adjustments"]
+    assert adjustments["status"] in {"alternatives_available", "no_single_variable_improvement"}
+    assert len(adjustments["alternatives"]) <= 3
+    _assert_aggregated(adjustments)
+
+
+def test_compare_api_does_not_add_a_corrective_path_for_a_go_baseline():
+    client = TestClient(app)
+    response = client.post(
+        "/api/compare",
+        json={"scenarios": [{"price": 2.19, "channel": "DTC Online", "month": 7}]},
+    )
+
+    assert response.status_code == 200
+    assert "model_adjustments" not in response.json()

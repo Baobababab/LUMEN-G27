@@ -516,6 +516,15 @@ Il ranking può sembrare una raccomandazione strategica completa. L'interfaccia 
 
 La fase termina con un massimo contenuto di alternative utili per dimensione. Il team non crea un ottimizzatore multi-obiettivo o combinazioni automatiche di più variabili.
 
+**Risultato della Fase 5, 2026-09-16**
+
+- `/api/compare` aggiunge aggiustamenti aggregati soltanto per baseline `CONDITIONAL` o `NO-GO`; uno scenario `GO` non riceve un percorso correttivo;
+- backend valuta prezzo nella stessa griglia supportata, canali ufficiali alternativi e undici mesi alternativi, modificando una sola variabile per candidato;
+- ranking deterministico: verdetto migliore, minori soglie fallite, minore distanza normalizzata dalle soglie; spareggio fisso prezzo, canale, mese;
+- interfaccia mostra al massimo tre proposte, una migliore per ciascuna leva disponibile, con metriche migliorate, trade-off e assunzioni mantenute fisse;
+- testi usano `Model adjustments` e dichiarano che non costituiscono promessa commerciale; nessun ottimizzatore multi-obiettivo o combinazione automatica è stato aggiunto;
+- test sintetici coprono `GO`, `CONDITIONAL`, `NO-GO`, assenza di miglioramenti, ordinamento, limiti e vincolo a una sola variabile; test API e frontend verificano contratto aggregato e rendering backend.
+
 ### Fase 6: modalità stampa
 
 **File probabilmente coinvolti**

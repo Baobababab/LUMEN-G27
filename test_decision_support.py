@@ -58,3 +58,55 @@ def test_launch_timing_returns_each_of_the_twelve_months():
             month, {"monthly_contribution_eur": 10, "payback_months": 8}
         )
         assert result["selected_month"]["number"] == month
+
+
+def _decision(label, ltv=2.0, payback=13.0, acceptance=0.3):
+    return {
+        "verdict": label,
+        "metrics": {
+            "ltv_cac_ratio": ltv,
+            "payback_months": payback,
+            "acceptance_rate": acceptance,
+            "payback_horizon_months": 12,
+            "ltv_cac_pass": ltv >= 3,
+            "payback_pass": payback <= 12,
+            "acceptance_pass": acceptance >= 0.35,
+        },
+    }
+
+
+def test_model_adjustments_rank_single_variable_improvements_deterministically():
+    def synthetic_verdict(price, channel, month, _):
+        if price == 0.64:
+            return _decision("GO", 3.1, 11, 0.4)
+        if channel == "Retail/Grocery":
+            return _decision("CONDITIONAL", 3.1, 13, 0.4)
+        if month == 2:
+            return _decision("CONDITIONAL", 3.1, 11, 0.3)
+        return _decision("NO-GO")
+
+    with patch("decision_support.verdict", side_effect=synthetic_verdict):
+        result = decision_support.model_adjustments(0.62, "DTC Online", 1, 12)
+
+    assert result["status"] == "alternatives_available"
+    assert result["alternatives"][0]["verdict"] == "GO"
+    assert result["alternatives"][0]["change"] == "Retail price: EUR 0.62 to EUR 0.64"
+    assert all("stay fixed" in item["held_constant"] for item in result["alternatives"])
+    assert len({item["change"].split(":", 1)[0] for item in result["alternatives"]}) == len(result["alternatives"])
+    for item in result["alternatives"]:
+        changed = sum(
+            item["inputs"][key] != value
+            for key, value in {"price": 0.62, "channel": "DTC Online", "month": 1}.items()
+        )
+        assert changed == 1
+    assert len(result["alternatives"]) <= 3
+
+
+def test_model_adjustments_skip_go_and_report_when_no_single_change_improves():
+    with patch("decision_support.verdict", return_value=_decision("GO", 3.1, 11, 0.4)):
+        assert decision_support.model_adjustments(2.19, "DTC Online", 7, 12)["status"] == "not_needed"
+    with patch("decision_support.verdict", return_value=_decision("NO-GO")):
+        result = decision_support.model_adjustments(2.19, "DTC Online", 7, 12)
+
+    assert result["status"] == "no_single_variable_improvement"
+    assert result["alternatives"] == []

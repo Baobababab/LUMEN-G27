@@ -7,6 +7,7 @@ const comparison = document.querySelector("#comparison");
 const comparisonResults = document.querySelector("#comparison-results");
 const analysis = document.querySelector("#analysis");
 const showAnalysisButton = document.querySelector("#show-analysis");
+const adjustments = document.querySelector("#adjustments");
 let analysisRequested = false;
 
 const money = (value) => new Intl.NumberFormat("en-IE", {
@@ -114,6 +115,13 @@ function showAnalysis(data) {
   analysis.hidden = false;
 }
 
+function showAdjustments(data) {
+  if (!data) return;
+  document.querySelector("#adjustments-summary").textContent = data.summary;
+  document.querySelector("#adjustment-results").innerHTML = data.alternatives.map((item) => `<article class="comparison-card"><h3>${item.verdict}: ${item.change}</h3><p><strong>Improves:</strong> ${item.improvements.join("; ") || "No approved decision metric improves."}</p><p><strong>Trade-offs:</strong> ${item.trade_offs.join("; ") || "No approved decision metric worsens."}</p><p>${item.held_constant}</p></article>`).join("");
+  adjustments.hidden = false;
+}
+
 function setExplanations(open) {
   document.querySelectorAll(".explanation").forEach((detail) => { detail.open = open; });
 }
@@ -145,6 +153,7 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
   result.hidden = true;
   analysis.hidden = true;
+  adjustments.hidden = true;
   statusMessage.textContent = "Calculating scenarios…";
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
@@ -156,6 +165,7 @@ form.addEventListener("submit", async (event) => {
     showResult(payload.scenarios[payload.baseline_index]);
     showComparison(payload);
     showAnalysis(payload.analysis);
+    showAdjustments(payload.model_adjustments);
     showAnalysisButton.hidden = false;
     statusMessage.textContent = scenarios.length === 1 ? "Scenario evaluated." : "Scenarios compared.";
   } catch (error) {
