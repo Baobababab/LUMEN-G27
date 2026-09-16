@@ -3,24 +3,24 @@
 ## Purpose and verified baseline
 
 This plan records approved work and completed implementation evidence for the LUMEN prototype.
-Planning began from a static frontend in \`public/\`, FastAPI in \`api/index.py\`, and calculations
-in Python modules. The original verified baseline was \`main\` at
-\`b40838303222bed86942a7ed6e6091507ecc55dc\`, with a successful Production deployment and nine
+Planning began from a static frontend in `public/`, FastAPI in `api/index.py`, and calculations
+in Python modules. The original verified baseline was `main` at
+`b40838303222bed86942a7ed6e6091507ecc55dc`, with a successful Production deployment and nine
 local Python 3.11 tests. GitHub Actions on Python 3.12 remains the official gate.
 
 The objective is a clear decision tool for a non-technical manager choosing price, position,
 launch channel, and launch month for Germany. It presents the CMO and CFO trade-off while producing
-one verdict only: \`GO\`, \`CONDITIONAL\`, or \`NO-GO\`. Changes to verdict rules require documented
+one verdict only: `GO`, `CONDITIONAL`, or `NO-GO`. Changes to verdict rules require documented
 rationale, focused tests, and approval.
 
 ## Architecture and information contract
 
 | Layer | Responsibility |
 | --- | --- |
-| \`public/index.html\` | Accessible page structure and controls |
-| \`public/styles.css\` | Presentation, responsive layout, visual states, and print |
-| \`public/app.js\` | Temporary browser state, API calls, and rendering |
-| \`api/index.py\` | Request validation and aggregated-response serialization |
+| `public/index.html` | Accessible page structure and controls |
+| `public/styles.css` | Presentation, responsive layout, visual states, and print |
+| `public/app.js` | Temporary browser state, API calls, and rendering |
+| `api/index.py` | Request validation and aggregated-response serialization |
 | Python modules | Approved formulas, decision rules, and data access |
 
 JavaScript contains no economic formulas, decision thresholds, competitive classifications, or
@@ -36,11 +36,11 @@ and limits.
 Verdict thresholds are LTV:CAC of 3.0, the user-selected payback horizon, and a 35% price
 acceptability index.
 
-- \`critical\`: the metric fails its approved threshold;
-- \`monitor\`: the metric passes but decides the verdict, or has no approved threshold;
-- \`favorable\`: the metric passes and does not decide the verdict.
+- `critical`: the metric fails its approved threshold;
+- `monitor`: the metric passes but decides the verdict, or has no approved threshold;
+- `favorable`: the metric passes and does not decide the verdict.
 
-Metrics without an approved threshold display \`Monitor\` and \`No approved decision threshold\`.
+Metrics without an approved threshold display `Monitor` and `No approved decision threshold`.
 Expandable controls have explicit labels, work with keyboard and screen readers, and support global
 open and close actions.
 
@@ -49,7 +49,7 @@ open and close actions.
 ### Competitive position and CMO/CFO perspectives
 
 The backend compares selected price with observations in
-\`competitor_prices_by_channel.csv\` for the same channel and comparable format. It returns the
+`competitor_prices_by_channel.csv` for the same channel and comparable format. It returns the
 competitor name, recorded positioning, observed range, and distance from LUMEN price. Affordable,
 premium, and highly premium are management labels derived from supplied observations, not general
 market claims. The tool states any overlap and never estimates a missing competitor price.
@@ -64,10 +64,10 @@ decision driver, main risk, and accepted trade-off.
 
 The page starts with one scenario and supports up to three. Users can duplicate, edit, and remove
 scenarios. The backend returns full results and aggregated differences for at most three valid
-scenarios. \`Compare channels\` creates all official channels with unchanged price, month, and
+scenarios. `Compare channels` creates all official channels with unchanged price, month, and
 horizon. The frontend does not calculate economic differences.
 
-Price sensitivity uses discrete prices within \`OBSERVED_PRICE_SUPPORT\`. It does not use binary
+Price sensitivity uses discrete prices within `OBSERVED_PRICE_SUPPORT`. It does not use binary
 search because acceptability is non-monotonic below EUR 2.10. The selected price is always
 evaluated. The service groups consecutive prices with the same verdict and returns the selected
 interval plus nearest verdict changes. Each request has a 250-evaluation limit and runs only for
@@ -78,22 +78,22 @@ reports the actual step, evaluation count, method, and latency, and calls the ou
 sensitivity rather than a demand forecast.
 
 Launch-month analysis keeps price, channel, and horizon fixed. It uses only
-\`seasonality_and_weather.csv\` and returns the selected month index, its rank, contribution and
+`seasonality_and_weather.csv` and returns the selected month index, its rank, contribution and
 payback change, and the most favorable supplied-data window. It does not call a weather service.
 
 ### Model adjustments
 
-For \`CONDITIONAL\` and \`NO-GO\` outcomes, the backend evaluates one changed variable at a time:
+For `CONDITIONAL` and `NO-GO` outcomes, the backend evaluates one changed variable at a time:
 supported price, another official channel, or another month. Ranking favors a better verdict, fewer
 failed thresholds, then shorter normalized distance from thresholds, with deterministic tie-breaks.
 The interface labels results as model adjustments. It does not create arbitrary advice or a
-multi-objective optimizer. A \`GO\` baseline explicitly states that no adjustment is needed.
+multi-objective optimizer. A `GO` baseline explicitly states that no adjustment is needed.
 
 ## Privacy and security
 
-\`data/customer_survey.csv\` is unchanged from the public university template
-\`ateliaworkshop-ai/lumen-pricing-case-template\`. Runtime processing excludes \`respondent_id\`,
-\`first_name\`, \`last_name\`, and \`email\`.
+`data/customer_survey.csv` is unchanged from the public university template
+`ateliaworkshop-ai/lumen-pricing-case-template`. Runtime processing excludes `respondent_id`,
+`first_name`, `last_name`, and `email`.
 
 The implementation must retain:
 
@@ -105,17 +105,17 @@ The implementation must retain:
 
 Tests use only suite-created synthetic fixtures and sentinels. They never copy personal values from
 the supplied CSV. Privacy tests verify absent forbidden keys and sentinels, aggregated
-\`/api/scenario\` and \`/api/compare\` responses, safe 404-style raw-data failures, and aggregated
+`/api/scenario` and `/api/compare` responses, safe 404-style raw-data failures, and aggregated
 data-quality output.
 
 ## Build order and completed phases
 
 The implementation order was:
 
-\`Phase 0 → Phase 1 → Phase 2 → Phase 3 → Addendum 3A → Phase 4 → Phase 5 → Addendum 5A →
-Addendum 5B → Addendum 5C → Phase 6 → Phase 7\`.
+`Phase 0 → Phase 1 → Phase 2 → Phase 3 → Addendum 3A → Phase 4 → Phase 5 → Addendum 5A →
+Addendum 5B → Addendum 5C → Phase 6 → Phase 7`.
 
-Each phase began from updated \`main\` after the preceding merge.
+Each phase began from updated `main` after the preceding merge.
 
 ### Phase 0: privacy baseline
 
@@ -137,7 +137,7 @@ was invented.
 
 ### Phase 3 and Addendum 3A: scenario comparison and selected baseline
 
-\`/api/compare\` accepts one to three scenarios, calculates results and aggregated differences in
+`/api/compare` accepts one to three scenarios, calculates results and aggregated differences in
 the backend, and supports the official channel comparison. Browser state is temporary. The selected
 baseline drives detailed panels and all relative differences.
 
@@ -151,14 +151,14 @@ Month analysis uses supplied seasonal indices only.
 
 ### Phase 5 and addenda: model adjustments
 
-For \`CONDITIONAL\` and \`NO-GO\`, the backend evaluates supported price changes, alternative
+For `CONDITIONAL` and `NO-GO`, the backend evaluates supported price changes, alternative
 official channels, and alternative months, one variable at a time. The interface shows at most
 three manager-readable adjustments at the end of the results. It also displays a clear no-change
-message for \`GO\`.
+message for `GO`.
 
 ### Phase 6: print mode
 
-\`Print evaluation\` uses the native browser dialog. The print record includes evaluated inputs,
+`Print evaluation` uses the native browser dialog. The print record includes evaluated inputs,
 recommendation, trade-off, perspectives, metrics, sources, timestamp, and page URL. Print CSS
 hides controls and Data quality. No PDF library, server-side generator, email, or archive was added.
 
@@ -166,8 +166,14 @@ hides controls and Data quality. No PDF library, server-side generator, email, o
 
 README now completes the university checklist and states the stable Vercel domain. PROJECT_CONTEXT
 records delivered privacy boundaries, browser/Python responsibilities, and native printing.
-Privacy/API checks passed 13 tests; the full suite passed 33 tests; \`python -m compileall .\`
-passed. PR #55 merged. Production succeeded on \`894c5de\`, and the public-site smoke test passed.
+Privacy/API checks passed 13 tests; the full suite passed 33 tests; `python -m compileall .`
+passed. PR #55 merged. Production succeeded on `894c5de`, and the public-site smoke test passed.
+
+### Post-Phase 7 result-layout adjustment
+
+The results page places metric-reading guidance directly below Decision metrics, rather than in a
+separate panel. On desktop, decision metrics use a three-column grid. The final sections appear in
+this order: model adjustments, Data quality and cleaning, then Print evaluation.
 
 ## Mandatory phase stop protocol
 
@@ -188,6 +194,6 @@ This separate task translates repository-authored Italian documentation into Eng
 technical meaning and data. It does not translate CSV values, supplied PDF material, or verbatim
 prompt logs.
 
-Translation result, 2026-09-16: \`IMPLEMENTATION_PLAN.md\` is now English. CSV values, supplied
+Translation result, 2026-09-16: `IMPLEMENTATION_PLAN.md` is now English. CSV values, supplied
 PDF material, and prompt logs remain unchanged because they are source data, source material, or
 verbatim records rather than repository-authored documentation.
