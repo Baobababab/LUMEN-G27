@@ -58,6 +58,7 @@ function refreshScenarioLabels() {
 function addScenario(source = scenariosElement.lastElementChild) {
   if (scenariosElement.children.length >= 3) return;
   const copy = source.cloneNode(true);
+  copy.querySelector(".remove-scenario")?.remove();
   const remove = document.createElement("button");
   remove.type = "button";
   remove.className = "secondary remove-scenario";
