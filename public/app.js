@@ -8,6 +8,7 @@ const comparisonResults = document.querySelector("#comparison-results");
 const analysis = document.querySelector("#analysis");
 const showAnalysisButton = document.querySelector("#show-analysis");
 const adjustments = document.querySelector("#adjustments");
+const printMetadata = document.querySelector("#print-metadata");
 let analysisRequested = false;
 
 const money = (value) => new Intl.NumberFormat("en-IE", {
@@ -43,6 +44,11 @@ function showResult(data) {
   document.querySelector("#data-quality").textContent = JSON.stringify(data.data_quality, null, 2);
   showMetrics(data.metric_details);
   result.hidden = false;
+}
+
+function showPrintMetadata() {
+  const evaluatedAt = new Intl.DateTimeFormat("en-IE", { dateStyle: "medium", timeStyle: "short" }).format(new Date());
+  printMetadata.textContent = `Evaluated: ${evaluatedAt}. Page: ${window.location.href}`;
 }
 
 function scenarioFrom(fields) {
@@ -135,6 +141,7 @@ function setExplanations(open) {
 document.querySelector("#expand-details").addEventListener("click", () => setExplanations(true));
 document.querySelector("#collapse-details").addEventListener("click", () => setExplanations(false));
 document.querySelector("#add-scenario").addEventListener("click", () => addScenario());
+document.querySelector("#print-result").addEventListener("click", () => window.print());
 comparisonResults.addEventListener("click", (event) => {
   const review = event.target.closest(".review-adjustments");
   if (!review) return;
@@ -176,6 +183,7 @@ form.addEventListener("submit", async (event) => {
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.detail?.reason || payload.detail?.message || payload.detail || "Scenario unavailable.");
     showResult(payload.scenarios[payload.baseline_index]);
+    showPrintMetadata();
     showComparison(payload);
     showAnalysis(payload.analysis);
     showAdjustments(payload.model_adjustments, payload.baseline_index);

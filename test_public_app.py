@@ -54,3 +54,18 @@ def test_public_app_can_select_each_non_go_scenario_for_its_adjustments():
     assert 'id="adjustments-title"' in page
     assert "Ways to improve Scenario ${baselineIndex + 1}" in script
     assert "apply only to selected Scenario ${baselineIndex + 1}" in script
+
+
+def test_public_app_uses_native_print_with_a_printable_evaluation_record():
+    script = Path("public/app.js").read_text(encoding="utf-8")
+    page = Path("public/index.html").read_text(encoding="utf-8")
+    stylesheet = Path("public/styles.css").read_text(encoding="utf-8")
+
+    assert 'id="print-result"' in page
+    assert 'id="print-metadata"' in page
+    assert 'window.print()' in script
+    assert "showPrintMetadata();" in script
+    assert "Page: ${window.location.href}" in script
+    assert "@media print" in stylesheet
+    assert "#data-quality-panel" in stylesheet
+    assert ".metric:not([open]) > :not(summary)" in stylesheet

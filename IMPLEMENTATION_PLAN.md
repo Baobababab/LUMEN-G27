@@ -685,6 +685,13 @@ Le sezioni espandibili possono risultare chiuse nella stampa. Il foglio `@media 
 
 La fase termina quando il browser salva una copia PDF leggibile. Il team non implementa template PDF, invio email o archiviazione.
 
+**Risultato della Fase 6, 2026-09-16**
+
+- `Print evaluation` usa il dialogo nativo del browser; non aggiunge librerie o generazione PDF server-side;
+- record di stampa include timestamp della valutazione e URL della pagina;
+- CSS di stampa mostra input, recommendation, trade-off, prospettive, metriche e fonti delle metriche; nasconde controlli e qualità dati;
+- test frontend verifica comando nativo, metadati e regole di stampa. Verifica browser conferma un caso con uno scenario e uno con tre scenari.
+
 ### Fase 7: documentazione, privacy, test completi e verifica Vercel
 
 **File probabilmente coinvolti**

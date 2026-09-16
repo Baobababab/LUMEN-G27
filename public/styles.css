@@ -57,3 +57,21 @@ pre { overflow: auto; white-space: pre-wrap; font-size: .78rem; }
 li { margin: 8px 0; line-height: 1.45; }
 summary { cursor: pointer; font-weight: 700; }
 @media (max-width: 760px) { .page { padding: 28px 16px 48px; } .controls, .metrics, .perspectives { grid-template-columns: 1fr; } .section-heading { align-items: flex-start; flex-direction: column; } }
+@media print {
+  @page { margin: 12mm; }
+  :root, body { background: #fff; color: #000; }
+  .page { max-width: none; padding: 0; }
+  button, #status, #show-analysis, #data-quality-panel, [hidden] { display: none !important; }
+  .panel, .metric { border: 0; border-radius: 0; box-shadow: none; margin: 0 0 5mm; padding: 0; break-inside: avoid; }
+  .decision, .metric--favorable, .metric--monitor, .metric--critical { border-left: 0; }
+  .controls, .metrics, .perspectives { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4mm; }
+  .scenario-fields { border: 0; background: transparent; color: #000; margin: 0 0 4mm; padding: 0; break-inside: avoid; }
+  .scenario-fields--selected { border: 0; }
+  .scenario-fields:not(.scenario-fields--selected) .scenario-title, .scenario-fields:not(.scenario-fields--selected) label, label, .metric span, .metric-name, .metric-comparison, .adjustment-card p, .adjustment-limit { color: #000; }
+  input:not([type="radio"]), select { appearance: none; border: 0; border-radius: 0; background: transparent; color: #000; padding: 0; }
+  input[type="radio"], .baseline-badge, .detail-controls { display: none; }
+  .metric:not([open]) > :not(summary) { display: block !important; }
+  .methodology { display: grid !important; }
+  .methodology div { break-inside: avoid; }
+  a { color: #000; text-decoration: none; }
+}
