@@ -33,7 +33,10 @@ def test_public_app_requests_and_renders_optional_backend_analysis_only():
 
 def test_public_app_renders_backend_model_adjustments_without_calculating_them():
     script = Path("public/app.js").read_text(encoding="utf-8")
+    page = Path("public/index.html").read_text(encoding="utf-8")
 
     assert "showAdjustments(payload.model_adjustments)" in script
-    assert "No approved decision metric improves." in script
-    assert "Model adjustments" in Path("public/index.html").read_text(encoding="utf-8")
+    assert "item.headline" in script
+    assert "Ways to improve this scenario" in page
+    assert page.index('id="adjustments"') > page.index('id="data-quality"')
+    assert "CONDITIONAL: Sales channel" not in script

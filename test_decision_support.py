@@ -91,6 +91,7 @@ def test_model_adjustments_rank_single_variable_improvements_deterministically()
     assert result["status"] == "alternatives_available"
     assert result["alternatives"][0]["verdict"] == "GO"
     assert result["alternatives"][0]["change"] == "Retail price: EUR 0.62 to EUR 0.64"
+    assert result["alternatives"][0]["headline"] == "Consider a retail price of EUR 0.64"
     assert all("stay fixed" in item["held_constant"] for item in result["alternatives"])
     assert len({item["change"].split(":", 1)[0] for item in result["alternatives"]}) == len(result["alternatives"])
     for item in result["alternatives"]:

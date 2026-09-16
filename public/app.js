@@ -118,7 +118,11 @@ function showAnalysis(data) {
 function showAdjustments(data) {
   if (!data) return;
   document.querySelector("#adjustments-summary").textContent = data.summary;
-  document.querySelector("#adjustment-results").innerHTML = data.alternatives.map((item) => `<article class="comparison-card"><h3>${item.verdict}: ${item.change}</h3><p><strong>Improves:</strong> ${item.improvements.join("; ") || "No approved decision metric improves."}</p><p><strong>Trade-offs:</strong> ${item.trade_offs.join("; ") || "No approved decision metric worsens."}</p><p>${item.held_constant}</p></article>`).join("");
+  document.querySelector("#adjustment-results").innerHTML = data.alternatives.map((item) => {
+    const improvements = item.improvements.join(". ") || "No approved decision metric improves.";
+    const tradeOffs = item.trade_offs.length ? `The model also shows this trade-off: ${item.trade_offs.join(". ")}.` : "No approved decision metric worsens under this change.";
+    return `<article class="adjustment-card"><h3>${item.headline}</h3><p>With this one change, the model returns a ${item.verdict} recommendation. ${item.held_constant} ${improvements}. ${tradeOffs}</p></article>`;
+  }).join("");
   adjustments.hidden = false;
 }
 
