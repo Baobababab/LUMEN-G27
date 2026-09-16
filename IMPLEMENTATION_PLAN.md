@@ -231,6 +231,14 @@ Una risposta API troppo verbosa può duplicare contenuti statici. Il team centra
 
 La fase termina quando l'attuale scenario singolo dispone di spiegazioni complete. Il team non introduce grafici, nuove metriche o modifiche al verdetto.
 
+**Risultato della Fase 1, 2026-09-16**
+
+- API restituisce metadati aggregati per sei metriche, con stato, confronto, spiegazione, formula, fonte, assunzioni e limiti;
+- frontend usa questi metadati per dettagli accessibili e controlli globali di apertura e chiusura;
+- testi dell'app restano in inglese aziendale semplice;
+- README documenta l'esplicabilità e l'assenza di calcoli nel browser;
+- 4 test API, 12 test completi e il controllo sintattico JavaScript passano localmente con Python 3.11; CI Python 3.12 resta gate ufficiale.
+
 ### Fase 2: posizionamento competitivo e pannello CMO/CFO
 
 **File probabilmente coinvolti**

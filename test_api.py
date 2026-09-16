@@ -1,10 +1,24 @@
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from api.index import ScenarioRequest, app, evaluate_scenario
+from api.index import ScenarioRequest, _metric_state, app, evaluate_scenario
 
 
 _FORBIDDEN_KEYS = {"respondent_id", "first_name", "last_name", "email"}
+_DETAIL_KEYS = {
+    "key",
+    "name",
+    "acronym",
+    "value",
+    "unit",
+    "state",
+    "comparison",
+    "explanation",
+    "formula",
+    "source",
+    "assumptions",
+    "limits",
+}
 
 
 def _assert_aggregated(value):
@@ -23,10 +37,54 @@ def test_api_returns_only_aggregated_scenario_results():
     assert result["verdict"] == "GO"
     assert result["metrics"]["price_acceptability_index"] > 0
     assert result["metrics"]["ltv_cac_ratio"] > 0
-    assert set(result) == {"verdict", "decided_by", "reasons", "trade_off", "metrics", "data_quality"}
+    assert set(result) == {
+        "verdict",
+        "decided_by",
+        "reasons",
+        "trade_off",
+        "metrics",
+        "metric_details",
+        "data_quality",
+    }
     assert "customer_survey" not in result["metrics"]
     assert result["data_quality"]["pii_columns_excluded"]["count"] >= 4
+    assert len(result["metric_details"]) == 6
+    details = {item["key"]: item for item in result["metric_details"]}
+    assert set(details) == {
+        "price_acceptability_index",
+        "unit_contribution_eur",
+        "monthly_contribution_eur",
+        "lifetime_value_eur",
+        "ltv_cac_ratio",
+        "payback_months",
+    }
+    for item in details.values():
+        assert set(item) == _DETAIL_KEYS
+        assert item["state"] in {"favorable", "monitor", "critical"}
+        assert item["name"]
+        assert item["explanation"]
+        assert item["formula"]
+        assert item["source"]
+        assert item["assumptions"]
+        assert item["limits"]
+    driver_key = {
+        "acceptance_rate": "price_acceptability_index",
+        "ltv_cac_ratio": "ltv_cac_ratio",
+        "payback_months": "payback_months",
+    }[result["decided_by"]]
+    assert details[driver_key]["state"] == "monitor"
+    assert details["unit_contribution_eur"]["comparison"] == "No approved decision threshold."
     _assert_aggregated(result)
+
+
+def test_metric_states_follow_existing_verdict_pass_flags():
+    passed = {"acceptance_pass": True, "ltv_cac_pass": True, "payback_pass": True}
+    failed = {**passed, "ltv_cac_pass": False}
+
+    assert _metric_state("unit_contribution_eur", passed, "ltv_cac_ratio") == "monitor"
+    assert _metric_state("price_acceptability_index", passed, "acceptance_rate") == "monitor"
+    assert _metric_state("payback_months", passed, "acceptance_rate") == "favorable"
+    assert _metric_state("ltv_cac_ratio", failed, "ltv_cac_ratio") == "critical"
 
 
 def test_api_returns_a_safe_error_for_unsupported_price():
