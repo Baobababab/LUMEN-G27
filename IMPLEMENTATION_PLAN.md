@@ -186,6 +186,7 @@ La fase termina dopo test mirati, suite completa, aggiornamenti documentali, pro
 - FastAPI restituisce un errore 422 senza riecheggiare input non valido;
 - i test usano sentinelle sintetiche e verificano l'assenza di chiavi e valori proibiti;
 - le route di file e righe grezze provate dai test restituiscono 404;
+- `httpx` è dichiarato nelle dipendenze per eseguire gli stessi test HTTP in locale e nel CI Python 3.12;
 - README documenta origine del CSV e trattamento dei quattro identificativi;
 - 5 test mirati e 11 test completi passano localmente con Python 3.11; il CI Python 3.12 resta gate ufficiale.
 
