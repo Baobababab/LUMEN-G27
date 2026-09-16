@@ -154,6 +154,15 @@ editing request and response handling twice.
 - Prove that no raw HTML, parser exception, stack trace, or response body appears in the page.
 - Run focused tests, the complete suite, syntax checks, and privacy tests.
 
+### Completion record
+
+Implemented on branch `fix/validate-scenario-requests`. The 120-month maximum is enforced by the
+HTML input, Pydantic, and direct verdict validation. The browser reads JSON only for declared JSON
+responses and maps every failure class to a safe manager-facing message. The sensitivity local is
+renamed `bestWindow`. Added boundary, direct-validation, response-handler, and frontend contract
+coverage. Focused tests passed 30 tests; the full suite passed 43 tests; `node --check public/app.js`
+and `python -m compileall .` passed.
+
 ## Phase D — Add deployment protections and page metadata
 
 **Findings:** S1 and M1. This phase is isolated because correctness must be verified against a Vercel

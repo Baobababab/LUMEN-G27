@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from acceptance import AcceptanceDataError
-from constants import DEFAULT_PAYBACK_HORIZON_MONTHS
+from constants import DEFAULT_PAYBACK_HORIZON_MONTHS, MAX_PAYBACK_HORIZON_MONTHS
 from data_loader import cleaning_report, load_all
 from decision_support import model_adjustments, scenario_analysis
 from economics import ltv, monthly_contribution, unit_contribution
@@ -24,7 +24,7 @@ class ScenarioRequest(BaseModel):
     price: float = Field(gt=0)
     channel: Literal["DTC Online", "Retail/Grocery", "Gym & Office"]
     month: int = Field(ge=1, le=12)
-    payback_horizon_months: float = Field(default=DEFAULT_PAYBACK_HORIZON_MONTHS, gt=0)
+    payback_horizon_months: float = Field(default=DEFAULT_PAYBACK_HORIZON_MONTHS, gt=0, le=MAX_PAYBACK_HORIZON_MONTHS)
 
 
 class ScenarioCompareRequest(BaseModel):

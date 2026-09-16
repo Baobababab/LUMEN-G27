@@ -191,6 +191,15 @@ states approved threshold performance without implying a relative scenario compa
 adjustment can replace the selected scenario inputs and evaluate that alternative as the new
 baseline. Focused tests and the complete suite passed locally before the phase pull request.
 
+### Post-audit Phase C: bounded input and safe API failures
+
+The payback horizon has one shared maximum of 120 months in browser controls, API validation, and
+direct verdict validation. The browser now checks response content type and status before parsing
+JSON. It shows only business-readable messages for expected validation failures, unavailable
+service, malformed content, timeouts, and network failure. The sensitivity local name is
+`bestWindow`, avoiding a shadowed browser global. Focused tests and the complete suite passed
+locally before the phase pull request.
+
 ## Mandatory phase stop protocol
 
 After each phase:

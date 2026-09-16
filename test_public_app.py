@@ -25,6 +25,22 @@ def test_public_app_renders_a_null_metric_as_not_recoverable_before_formatting()
     assert 'return "Not recoverable";' in script
 
 
+def test_public_app_bounds_payback_and_handles_api_failures_without_parser_errors():
+    script = Path("public/app.js").read_text(encoding="utf-8")
+    page = Path("public/index.html").read_text(encoding="utf-8")
+
+    assert 'max="120"' in page
+    assert "Payback horizon (months, 0.01–120)" in page
+    assert "async function readScenarioResponse(response)" in script
+    assert 'response.headers.get("content-type")' in script
+    assert "await response.json();" in script
+    assert "Scenario service returned an invalid response. Try again." in script
+    assert "Scenario service is unavailable. Try again." in script
+    assert "Scenario request could not be completed. Try again." in script
+    assert "const bestWindow = timing.most_favorable_window;" in script
+    assert "const window = timing.most_favorable_window;" not in script
+
+
 def test_hidden_baseline_badge_overrides_its_display_style():
     stylesheet = Path("public/styles.css").read_text(encoding="utf-8")
 

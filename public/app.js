@@ -25,6 +25,22 @@ function metricValue(metric) {
   return `${metric.value.toFixed(2)} months`;
 }
 
+async function readScenarioResponse(response) {
+  const isJson = response.headers.get("content-type")?.includes("application/json");
+  if (!isJson) throw new Error(response.ok ? "Scenario service returned an invalid response. Try again." : "Scenario service is unavailable. Try again.");
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error("Scenario service returned an invalid response. Try again.");
+  }
+  if (response.ok) return payload;
+  if (response.status >= 500) throw new Error("Scenario service is unavailable. Try again.");
+  const detail = payload?.detail;
+  const message = typeof detail === "string" ? detail : detail?.message;
+  throw new Error(typeof message === "string" ? message : "Invalid scenario input.");
+}
+
 function showMetrics(metricDetails) {
   metricsElement.innerHTML = metricDetails.map((metric) => {
     const label = metric.acronym ? `${metric.name} (${metric.acronym})` : metric.name;
@@ -118,10 +134,10 @@ function showAnalysis(data) {
   document.querySelector("#price-sensitivity").innerHTML = `<h3>Price sensitivity</h3><p>${interval.verdict} from ${money(interval.from_price_eur)} to ${money(interval.to_price_eur)} around selected price. Grid resolution: ${money(sensitivity.grid_step_eur)}; ${sensitivity.evaluation_count} of ${sensitivity.max_evaluations} allowed price evaluations.</p><p>Nearest verdict changes: ${changes}</p><p>${sensitivity.method} ${sensitivity.limit}</p>`;
   const timing = data.launch_timing;
   const selected = timing.selected_month;
-  const window = timing.most_favorable_window;
+  const bestWindow = timing.most_favorable_window;
   const payback = Number.isFinite(selected.payback_months) ? `${selected.payback_months.toFixed(2)} months` : "Not recoverable";
   const paybackChange = timing.payback_change_to_best_months === null ? "not available" : `${timing.payback_change_to_best_months.toFixed(2)} months`;
-  document.querySelector("#launch-timing").innerHTML = `<h3>Launch month</h3><p>${selected.name} has seasonal index ${selected.seasonality_index} and ranks ${selected.rank_of_12} of 12. Monthly contribution: ${money(selected.monthly_contribution_eur)}. Payback: ${payback}.</p><p>Most favourable supplied window: ${window.months.join(", ")} (index ${window.seasonality_index}). At the same price and channel, monthly contribution changes by ${money(timing.monthly_contribution_change_to_best_eur)} and payback changes by ${paybackChange}.</p><p>${timing.limit}</p>`;
+  document.querySelector("#launch-timing").innerHTML = `<h3>Launch month</h3><p>${selected.name} has seasonal index ${selected.seasonality_index} and ranks ${selected.rank_of_12} of 12. Monthly contribution: ${money(selected.monthly_contribution_eur)}. Payback: ${payback}.</p><p>Most favourable supplied window: ${bestWindow.months.join(", ")} (index ${bestWindow.seasonality_index}). At the same price and channel, monthly contribution changes by ${money(timing.monthly_contribution_change_to_best_eur)} and payback changes by ${paybackChange}.</p><p>${timing.limit}</p>`;
   analysis.hidden = false;
 }
 
@@ -195,8 +211,7 @@ form.addEventListener("submit", async (event) => {
   try {
     const scenarios = [...scenariosElement.querySelectorAll(".scenario-fields")].map(scenarioFrom);
     const response = await fetch("/api/compare", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarios, baseline_index: selectedBaselineIndex(), include_analysis: analysisRequested }), signal: controller.signal });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.detail?.reason || payload.detail?.message || payload.detail || "Scenario unavailable.");
+    const payload = await readScenarioResponse(response);
     showResult(payload.scenarios[payload.baseline_index]);
     showPrintMetadata();
     showComparison(payload);
@@ -205,7 +220,7 @@ form.addEventListener("submit", async (event) => {
     showAnalysisButton.hidden = false;
     statusMessage.textContent = scenarios.length === 1 ? "Scenario evaluated." : "Scenarios compared.";
   } catch (error) {
-    statusMessage.textContent = error.name === "AbortError" ? "Scenario request timed out. Try again." : error.message;
+    statusMessage.textContent = error.name === "AbortError" ? "Scenario request timed out. Try again." : error.message.startsWith("Scenario ") || error.message === "Invalid scenario input." ? error.message : "Scenario request could not be completed. Try again.";
   } finally {
     clearTimeout(timeout);
   }

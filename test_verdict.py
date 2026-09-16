@@ -4,7 +4,7 @@ from math import inf
 from unittest.mock import patch
 
 from acceptance import AcceptanceDataError
-from constants import ACCEPTANCE_FLOOR, TARGET_LTV_CAC
+from constants import ACCEPTANCE_FLOOR, MAX_PAYBACK_HORIZON_MONTHS, TARGET_LTV_CAC
 from verdict import format_payback_months, verdict
 
 
@@ -89,7 +89,7 @@ def test_payback_horizon_and_invalid_inputs_and_data_error_propagation():
         _assert_raises(ValueError, bad_price, "DTC Online", 7)
     for bad_month in (True, 7.0, "7", 0, 13):
         _assert_raises(ValueError, 2.19, "DTC Online", bad_month)
-    for bad_horizon in (True, "12", float("nan"), float("inf"), 0, -1):
+    for bad_horizon in (True, "12", float("nan"), float("inf"), 0, -1, MAX_PAYBACK_HORIZON_MONTHS + 1, 1e308):
         _assert_raises(ValueError, 2.19, "DTC Online", 7, bad_horizon)
     _assert_raises(ValueError, 2.19, "Unknown channel", 7)
 
