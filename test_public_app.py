@@ -38,7 +38,7 @@ def test_public_app_renders_backend_model_adjustments_without_calculating_them()
     assert "showAdjustments(payload.model_adjustments, payload.baseline_index)" in script
     assert "item.headline" in script
     assert "Ways to improve this scenario" in page
-    assert page.index('id="adjustments"') > page.index('id="data-quality"')
+    assert page.index('id="adjustments"') < page.index('id="data-quality"')
     assert "CONDITIONAL: Sales channel" not in script
     assert 'data.status === "not_needed" ? data.summary' in script
 
@@ -69,3 +69,13 @@ def test_public_app_uses_native_print_with_a_printable_evaluation_record():
     assert "@media print" in stylesheet
     assert "#data-quality-panel" in stylesheet
     assert ".metric:not([open]) > :not(summary)" in stylesheet
+
+
+def test_public_app_places_result_sections_and_metrics_in_manager_reading_order():
+    page = Path("public/index.html").read_text(encoding="utf-8")
+    stylesheet = Path("public/styles.css").read_text(encoding="utf-8")
+
+    assert "How to read this page" not in page
+    assert 'id="assumptions" class="section-intro"' in page
+    assert page.index('id="data-quality"') < page.index('id="print-result"')
+    assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in stylesheet
