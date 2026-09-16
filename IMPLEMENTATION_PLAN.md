@@ -398,6 +398,14 @@ Un'intera scheda cliccabile può cambiare baseline mentre l'utente modifica un i
 
 La postilla termina quando uno dei tre scenari può guidare sia i pannelli dettagliati sia le differenze backend. Dopo test mirati, suite completa, documentazione, prompt log e pull request, il team si ferma senza iniziare la Fase 4.
 
+**Risultato della Postilla 3A, 2026-09-16**
+
+- `/api/compare` accetta e restituisce `baseline_index`; le differenze restano calcolate dal backend;
+- ogni scenario offre `Use as baseline`; pannelli dettagliati e differenze seguono la baseline selezionata;
+- baseline selezionata ha fondo bianco e indicazione testuale; le altre schede usano grigio chiaro senza ridurre la leggibilità;
+- rimuovere la baseline seleziona il primo scenario rimasto; aggiungere o duplicare conserva la baseline;
+- test API, test regressione frontend e smoke test Chrome verificano selezione e richiesta della baseline.
+
 ### Fase 4: sensibilità del prezzo e analisi del mese
 
 **File probabilmente coinvolti**

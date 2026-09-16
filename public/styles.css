@@ -37,6 +37,15 @@ button:hover { background: #0f482d; }
 .methodology dd { margin: 4px 0 0; line-height: 1.45; }
 .secondary { margin-top: 0; background: #e8efe9; color: #155d3a; }
 .secondary:hover { background: #d8e5da; }
+.scenario-fields { margin: 14px 0; border: 1px solid #c7d0c8; border-radius: 8px; padding: 14px; background: #eef1ee; color: #647066; }
+.scenario-fields--selected { border: 2px solid #155d3a; background: #fff; color: #17201c; }
+.scenario-fields:not(.scenario-fields--selected) .scenario-title, .scenario-fields:not(.scenario-fields--selected) label { color: #647066; }
+.scenario-fields legend { padding: 0 6px; font-weight: 700; }
+.baseline-control { display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; color: inherit; font-size: .85rem; font-weight: 400; }
+.baseline-control input { width: auto; padding: 0; }
+.baseline-badge { display: inline-block; margin-left: 8px; border-radius: 999px; padding: 3px 8px; background: #dff2e6; color: #155d3a; font-size: .75rem; }
+.comparison-card { border-top: 1px solid #dce4dc; padding: 14px 0; color: #647066; }
+.comparison-card--selected { color: #17201c; }
 .decision { border-left: 6px solid #155d3a; }
 .status { min-height: 1.5em; color: #46544b; }
 pre { overflow: auto; white-space: pre-wrap; font-size: .78rem; }
