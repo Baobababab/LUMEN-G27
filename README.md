@@ -44,7 +44,7 @@ Check each box in this README as you go — not at the end, while you're working
 - [ ] **API keys**: if your tool calls an external API (weather, or anything else), where is the key stored? Never hardcoded in a file committed to GitHub. (A valid answer: "we didn't use any external API.")
 - [ ] **Deployment**: if you deployed a live demo, does any endpoint or response return raw, unfiltered data (e.g. the full survey with name/email) to any visitor?
 - [ ] **Files generated along the way**: if your tool (or Codex) created new files derived from the provided data, did you think about whether they should be committed to the repo or not?
-- [ ] **Storage**: if you're keeping any data, in what structure, and why that choice over another?
+- [x] **Storage**: the browser keeps up to three scenario inputs only while the page is open. We use this temporary session state because comparison needs no account, database, history, export, or personal data.
 - [ ] **Robustness**: what happens if the user gives an empty, inconsistent, or unexpected input?
 - [x] **Explainability**: each decision metric shows its business meaning, status, threshold comparison where approved, and an expandable explanation of formula, source, assumptions, and limits. The browser renders backend-provided metadata and does not calculate business logic.
 - [ ] **Business relevance**: does your prototype actually answer the problem posed in the brief, or is it an interesting technical build that's off-target?

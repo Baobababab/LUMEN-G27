@@ -333,6 +333,14 @@ Tre schede complete possono rendere la pagina illeggibile su mobile. Il confront
 
 La fase termina al confronto in memoria di tre scenari. Il team non aggiunge account, URL condivisibili, database, cronologia o esportazione dati.
 
+**Risultato della Fase 3, 2026-09-16**
+
+- `/api/compare` accetta da uno a tre scenari e restituisce risultati e differenze aggregate calcolati dal backend;
+- l'interfaccia parte con un solo scenario, ne può duplicare fino a tre, modificare o rimuovere le copie e blocca il quarto;
+- il comando "Compare channels" genera i tre canali ufficiali mantenendo invariati prezzo, mese e orizzonte;
+- lo stato rimane solo nel browser fino a refresh o chiusura; nessun account, database, cronologia o esportazione è stato aggiunto;
+- la checklist README documenta ora la scelta di storage temporaneo.
+
 ### Fase 4: sensibilità del prezzo e analisi del mese
 
 **File probabilmente coinvolti**

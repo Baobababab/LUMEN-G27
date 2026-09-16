@@ -1,6 +1,6 @@
 """Vercel API for the LUMEN Germany launch-scenario tool."""
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -23,6 +23,12 @@ class ScenarioRequest(BaseModel):
     channel: Literal["DTC Online", "Retail/Grocery", "Gym & Office"]
     month: int = Field(ge=1, le=12)
     payback_horizon_months: float = Field(default=DEFAULT_PAYBACK_HORIZON_MONTHS, gt=0)
+
+
+class ScenarioCompareRequest(BaseModel):
+    """One to three scenarios for a backend-calculated comparison."""
+
+    scenarios: Annotated[list[ScenarioRequest], Field(min_length=1, max_length=3)]
 
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
@@ -252,3 +258,23 @@ def evaluate_scenario(request: ScenarioRequest) -> dict:
             status_code=500,
             detail={"message": "The scenario could not be evaluated with available business data."},
         ) from error
+
+
+@app.post("/api/compare")
+def compare_scenarios(request: ScenarioCompareRequest) -> dict:
+    """Return up to three existing scenario results and backend-calculated deltas."""
+    scenarios = [evaluate_scenario(item) for item in request.scenarios]
+    baseline = scenarios[0]["metrics"]
+    return {
+        "scenarios": scenarios,
+        "differences": [
+            {
+                "unit_contribution_eur": item["metrics"]["unit_contribution_eur"] - baseline["unit_contribution_eur"],
+                "monthly_contribution_eur": item["metrics"]["monthly_contribution_eur"] - baseline["monthly_contribution_eur"],
+                "lifetime_value_eur": item["metrics"]["lifetime_value_eur"] - baseline["lifetime_value_eur"],
+                "ltv_cac_ratio": item["metrics"]["ltv_cac_ratio"] - baseline["ltv_cac_ratio"],
+                "payback_months": item["metrics"]["payback_months"] - baseline["payback_months"],
+            }
+            for item in scenarios
+        ],
+    }
