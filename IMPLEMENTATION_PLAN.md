@@ -200,6 +200,13 @@ service, malformed content, timeouts, and network failure. The sensitivity local
 `bestWindow`, avoiding a shadowed browser global. Focused tests and the complete suite passed
 locally before the phase pull request.
 
+### Post-audit Phase D: deployment protection and metadata
+
+Vercel applies a same-origin content security policy, `nosniff`, frame-denial, and referrer-policy
+headers across all routes. The page includes an English meta description and local SVG favicon.
+`robots.txt` permits indexing, as selected in the audit plan. Static configuration tests and the
+complete suite passed locally before the phase pull request.
+
 ## Mandatory phase stop protocol
 
 After each phase:
