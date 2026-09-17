@@ -73,3 +73,26 @@ Launch-month analysis ranks the supplied twelve `seasonality_and_weather.csv` in
 ## Model adjustments
 
 For a `CONDITIONAL` or `NO-GO` selected baseline, the backend tests supported price points, other official channels, and other launch months. Each candidate changes one variable only. It ranks candidates by verdict, fewer failed approved thresholds, and smaller normalized distance from those thresholds; ties use price, then channel, then month order. At the end of the results, “Ways to improve this scenario” explains up to three supported changes in business language, including what stays fixed and any trade-off. Selecting an alternative replaces the selected scenario inputs and evaluates it as the new baseline. A `GO` scenario instead confirms that no corrective adjustment is needed. These are model adjustments, not commercial promises.
+
+## How the project evolved
+
+We started by defining shared interfaces and a data contract. The first prototype combined an early
+Streamlit scenario cockpit, scenario comparison, and a visual decision interface. We then split the
+work into dedicated modules for data loading and cleaning, price acceptability, economics, verdict
+rules, and the Streamlit screen.
+
+After the core modules were integrated and covered by automated tests, we migrated the product to a
+Vercel-ready frontend and API. The final delivery added privacy controls, manager-readable metric
+explanations, CMO and CFO perspectives, multi-scenario comparison, selectable baselines, price
+sensitivity and launch-month analysis, model adjustments, native print support, security headers,
+deployment checks, and regression fixes.
+
+## Team contributions
+
+| Team member | Student ID | Contribution |
+|---|---:|---|
+| Christian Cili | e262998 | Project contract, price acceptability, Vercel migration, final product features, privacy, deployment, and release verification. |
+| Sanket Sharma | e261757 | Data loading and cleaning, privacy-safe data handling, data tests, and pull-request CI. |
+| Heloise Dufumier | e255139 | Economics, early scenario cockpit and comparison UI, real-data economics tests, and module integration. |
+| Lucie Moiroud | e263209 | Verdict logic and tests; shared early interface ideation with Heloise Dufumier. |
+| Elisa Bourron | e254965 | Streamlit Task E interface, interface cleanup, and module-based UI integration. |
