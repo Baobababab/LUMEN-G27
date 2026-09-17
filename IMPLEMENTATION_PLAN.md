@@ -207,6 +207,15 @@ headers across all routes. The page includes an English meta description and loc
 `robots.txt` permits indexing, as selected in the audit plan. Static configuration tests and the
 complete suite passed locally before the phase pull request.
 
+### Post-audit Phase E: final regression and production proof
+
+After the deployment-protection pull request merged, the full suite passed with 45 tests and the
+targeted privacy, API, public-page, and deployment checks passed with 28 tests. Python compilation
+and JavaScript syntax validation also passed. The API matrix verified all official channels,
+nullable non-recoverable payback, selected-baseline comparison, and the 120-month input boundary.
+Production at `https://lumen-g27.vercel.app` was verified at the same commit as `origin/main`
+(`6f68909`), with the configured headers, favicon, robots file, and aggregated scenario response.
+
 ## Mandatory phase stop protocol
 
 After each phase:
