@@ -218,6 +218,20 @@ This is a verification phase, not an opportunity for additional features.
 4. After an approved merge, prove that Production reports the same commit as `origin/main`, all
    required headers and assets are present, and the browser console is clean.
 
+### Completion record
+
+Completed on `chore/final-regression` after PR #65 merged. The full suite passed (45 tests), as
+did the targeted privacy, API, public-page, and deployment configuration checks (28 tests),
+Python compilation, and JavaScript syntax validation. The API regression matrix confirmed all
+three channels, nullable non-recoverable payback, three-scenario selected-baseline comparison,
+and the accepted 120-month versus rejected 121-month boundary.
+
+Production at `https://lumen-g27.vercel.app` returned the same commit as `origin/main`
+(`6f68909`), the required CSP, `nosniff`, frame-denial, referrer-policy, and platform HSTS
+headers, and successful `favicon.svg`, `robots.txt`, and scenario API responses. Existing browser
+contract tests cover the manager workflow and error states; an interactive browser console check
+was not repeated in this verification environment.
+
 ## Dependency order and delivery protocol
 
 The required order is **A → B → C → D → E**. Phase A fixes the rendering blocker and establishes
