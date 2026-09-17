@@ -216,6 +216,14 @@ nullable non-recoverable payback, selected-baseline comparison, and the 120-mont
 Production at `https://lumen-g27.vercel.app` was verified at the same commit as `origin/main`
 (`6f68909`), with the configured headers, favicon, robots file, and aggregated scenario response.
 
+### Follow-up audit fixes: scenario comparison and manager-facing copy
+
+The channel-comparison control now preserves Scenario 1 as the selected baseline and adds exactly
+the two missing official channels. A public validation reason is shown in safe business language.
+Non-recoverable payback uses lower case when it appears mid-sentence, while retaining its title
+case metric label. Currency formatting rounds before rendering so a negligible negative value
+displays as EUR 0.00 rather than negative zero. Regression coverage protects all four behaviours.
+
 ## Mandatory phase stop protocol
 
 After each phase:
