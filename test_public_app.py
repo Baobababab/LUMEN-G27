@@ -107,3 +107,23 @@ def test_public_app_places_result_sections_and_metrics_in_manager_reading_order(
     assert 'id="assumptions" class="section-intro"' in page
     assert page.index('id="data-quality"') < page.index('id="print-result"')
     assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in stylesheet
+
+
+def test_compare_channels_adds_only_the_missing_channels():
+    script = Path("public/app.js").read_text(encoding="utf-8")
+
+    assert 'const firstChannel = first.querySelector("[name=channel]").value;' in script
+    assert '["DTC Online", "Retail/Grocery", "Gym & Office"].filter((channel) => channel !== firstChannel)' in script
+    assert '["Retail/Grocery", "Gym & Office"].forEach((channel) => {' not in script
+
+
+def test_public_app_shows_the_api_rejection_reason():
+    script = Path("public/app.js").read_text(encoding="utf-8")
+
+    assert 'if (typeof detail?.reason === "string") throw new Error(`Scenario input rejected: ${detail.reason}.`);' in script
+
+
+def test_money_formatter_does_not_show_negative_zero():
+    script = Path("public/app.js").read_text(encoding="utf-8")
+
+    assert ".format(Math.round(value * 100) / 100 || 0);" in script

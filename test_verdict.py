@@ -104,7 +104,8 @@ def test_non_finite_payback_uses_manager_facing_text():
     assert format_payback_months(12.345) == "12.35 months"
     assert format_payback_months(inf) == "Not recoverable"
     assert all("inf" not in text.lower() for text in [*result["reasons"], result["trade_off"]])
-    assert any("Not recoverable" in text for text in [*result["reasons"], result["trade_off"]])
+    assert any("not recoverable" in text for text in [*result["reasons"], result["trade_off"]])
+    assert all("Not recoverable" not in text for text in [*result["reasons"], result["trade_off"]])
 
 
 if __name__ == "__main__":

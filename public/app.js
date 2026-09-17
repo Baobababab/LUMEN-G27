@@ -15,7 +15,7 @@ let adjustmentBaselineIndex = 0;
 
 const money = (value) => new Intl.NumberFormat("en-IE", {
   style: "currency", currency: "EUR", minimumFractionDigits: 2,
-}).format(value);
+}).format(Math.round(value * 100) / 100 || 0);
 
 function metricValue(metric) {
   if (metric.value === null || !Number.isFinite(metric.value)) return "Not recoverable";
@@ -37,6 +37,7 @@ async function readScenarioResponse(response) {
   if (response.ok) return payload;
   if (response.status >= 500) throw new Error("Scenario service is unavailable. Try again.");
   const detail = payload?.detail;
+  if (typeof detail?.reason === "string") throw new Error(`Scenario input rejected: ${detail.reason}.`);
   const message = typeof detail === "string" ? detail : detail?.message;
   throw new Error(typeof message === "string" ? message : "Invalid scenario input.");
 }
@@ -189,7 +190,8 @@ document.querySelector("#compare-channels").addEventListener("click", () => {
   const first = scenariosElement.firstElementChild;
   while (scenariosElement.children.length > 1) scenariosElement.lastElementChild.remove();
   first.querySelector("[name=baseline]").checked = true;
-  ["Retail/Grocery", "Gym & Office"].forEach((channel) => {
+  const firstChannel = first.querySelector("[name=channel]").value;
+  ["DTC Online", "Retail/Grocery", "Gym & Office"].filter((channel) => channel !== firstChannel).forEach((channel) => {
     addScenario(first);
     scenariosElement.lastElementChild.querySelector("[name=channel]").value = channel;
   });

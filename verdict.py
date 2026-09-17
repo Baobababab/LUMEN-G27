@@ -90,7 +90,7 @@ def _trade_off(values: dict[str, float], passed: dict[str, bool], horizon: float
     acceptance_pass = passed["acceptance_rate"]
     summary = (
         f"LTV:CAC is {values['ltv_cac_ratio']:.2f} against {TARGET_LTV_CAC:.2f}; "
-        f"payback is {format_payback_months(values['payback_months'])} against {horizon:.2f} months; "
+        f"payback is {format_payback_months(values['payback_months']).lower()} against {horizon:.2f} months; "
         f"acceptance is {values['acceptance_rate']:.1%} against {ACCEPTANCE_FLOOR:.1%}."
     )
     if economics_pass and not acceptance_pass:
@@ -126,7 +126,7 @@ def verdict(
     reasons = [
         f"LTV:CAC {values['ltv_cac_ratio']:.2f} vs {TARGET_LTV_CAC:.2f}: "
         f"{'PASS' if passed['ltv_cac_ratio'] else 'FAIL'}.",
-        f"Payback {format_payback_months(values['payback_months'])} vs {horizon:.2f} months: "
+        f"Payback {format_payback_months(values['payback_months']).lower()} vs {horizon:.2f} months: "
         f"{'PASS' if passed['payback_months'] else 'FAIL'}.",
         f"Acceptance {values['acceptance_rate']:.1%} vs {ACCEPTANCE_FLOOR:.1%}: "
         f"{'PASS' if passed['acceptance_rate'] else 'FAIL'}.",

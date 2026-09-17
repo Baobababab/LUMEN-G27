@@ -74,7 +74,7 @@ def _decision_driver(metrics: dict, decision_metrics: dict, decided_by: str) -> 
     }
     contexts = {
         "ltv_cac_ratio": f"LTV:CAC is {metrics['ltv_cac_ratio']:.2f}x against the {metrics['target_ltv_cac']:.2f}x target.",
-        "payback_months": f"Payback is {format_payback_months(metrics['payback_months'])} against the {metrics['payback_horizon_months']:.2f}-month horizon.",
+        "payback_months": f"Payback is {format_payback_months(metrics['payback_months']).lower()} against the {metrics['payback_horizon_months']:.2f}-month horizon.",
         "acceptance_rate": f"Price acceptability is {metrics['price_acceptability_index']:.1%} against the {metrics['acceptance_floor']:.1%} floor.",
     }
     pass_key = {
