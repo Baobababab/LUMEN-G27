@@ -191,6 +191,13 @@ Preview deployment, not only locally.
 - Check desktop and mobile browser consoles for CSP violations.
 - Run the complete local suite before opening the phase PR.
 
+### Completion record
+
+Implemented on branch `fix/deployment-headers`. Added route-wide Vercel CSP, `nosniff`, frame-denial,
+and referrer-policy headers; an English description; local SVG favicon; and an indexing-permitted
+`robots.txt`. Added static configuration and page-asset tests. Focused tests passed 12 tests; the
+full suite passed 45 tests; `node --check public/app.js` and `python -m compileall .` passed.
+
 ## Phase E — Final regression and production proof
 
 This is a verification phase, not an opportunity for additional features.
