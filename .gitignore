@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 .streamlit/secrets.toml
 .vercel/
+.env.local
+.DS_Store
